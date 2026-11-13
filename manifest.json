@@ -1,0 +1,21 @@
+{
+  "name": "NZ Rich Pineapple",
+  "short_name": "NZ Rich",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f8f4",
+  "theme_color": "#2e7d32",
+  "description": "Sistem Pengurusan Ladang NZ Rich Pineapple",
+  "icons": [
+    {
+      "src": "logo.jpeg.JPG",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "logo.jpeg.JPG",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
