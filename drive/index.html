@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>NEON WRESTLING 3D: MULTIPLAYER</title>
+<title>NEON WRESTLING 3D: FPP</title>
 <script type="importmap">
 {
   "imports": {
@@ -43,10 +43,10 @@
   
   #comboText{position:absolute;top:30%;left:50%;transform:translateX(-50%);
     font-size:60px;font-weight:900;color:#ffcc00;text-shadow:0 0 30px #ffcc00;
-    opacity:0;transition:opacity 0.2s, transform 0.2s;pointer-events:none}
+    opacity:0;transition:opacity 0.2s, transform 0.2s;pointer-events:none;text-align:center}
   #comboText.show{opacity:1;transform:translateX(-50%) scale(1.2)}
 
-  /* Butang Kawalan */
+  /* Butang Kawalan Sentuh */
   #controls{position:fixed;inset:0;pointer-events:none;z-index:20;display:none}
   .btn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.3);
     background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
@@ -56,27 +56,32 @@
 
   /* P1 Kawalan (Kiri) */
   #p1-controls{position:absolute;bottom:20px;left:20px;width:180px;height:180px}
-  #p1-controls .left{left:0;bottom:50px;width:60px;height:60px}
-  #p1-controls .right{left:70px;bottom:50px;width:60px;height:60px}
-  #p1-controls .punch{left:0;bottom:130px;width:60px;height:60px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
-  #p1-controls .grapple{left:70px;bottom:130px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
+  #p1-controls .up{left:60px;bottom:60px;width:60px;height:60px;display:none}
+  #p1-controls .down{left:60px;bottom:0px;width:60px;height:60px;display:none}
+  #p1-controls .left{left:0;bottom:30px;width:60px;height:60px}
+  #p1-controls .right{left:120px;bottom:30px;width:60px;height:60px}
+  #p1-controls .punch{left:60px;bottom:100px;width:70px;height:70px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
+  #p1-controls .grapple{left:130px;bottom:100px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
 
   /* P2 Kawalan (Kanan) */
   #p2-controls{position:absolute;bottom:20px;right:20px;width:180px;height:180px}
-  #p2-controls .left{right:70px;bottom:50px;width:60px;height:60px}
-  #p2-controls .right{right:0;bottom:50px;width:60px;height:60px}
-  #p2-controls .punch{right:0;bottom:130px;width:60px;height:60px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
-  #p2-controls .grapple{right:70px;bottom:130px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
+  #p2-controls .up{right:60px;bottom:60px;width:60px;height:60px;display:none}
+  #p2-controls .down{right:60px;bottom:0px;width:60px;height:60px;display:none}
+  #p2-controls .left{right:120px;bottom:30px;width:60px;height:60px}
+  #p2-controls .right{right:0;bottom:30px;width:60px;height:60px}
+  #p2-controls .punch{right:60px;bottom:100px;width:70px;height:70px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
+  #p2-controls .grapple{right:130px;bottom:100px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
 
   #startScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at center, #220000, #000);
     display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s;padding:20px}
   #startScreen.hide{opacity:0;pointer-events:none}
-  #startScreen h1{font-size:40px;color:#ffcc00;text-shadow:0 0 20px #ffcc00, 0 0 40px #ff8800;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
-  #startScreen p{opacity:0.7;margin-bottom:30px;letter-spacing:1px}
+  #startScreen h1{font-size:36px;color:#ffcc00;text-shadow:0 0 20px #ffcc00, 0 0 40px #ff8800;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
+  #startScreen p{opacity:0.7;margin-bottom:20px;letter-spacing:1px}
   
-  .start-btn{padding:15px 30px;font-size:18px;font-weight:900;color:#000;background:#ffcc00;
-    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #ffcc00;letter-spacing:2px;margin:10px;width:250px}
-  .start-btn.blue{background:#00ffff;box-shadow:0 0 30px #00ffff}
+  .start-btn{padding:15px 30px;font-size:16px;font-weight:900;color:#000;background:#ffcc00;
+    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #ffcc00;letter-spacing:2px;margin:8px;width:280px}
+  .start-btn.blue{background:#00ffff;box-shadow:0 0 30px #00ffff;}
+  .start-btn.green{background:#00ff88;box-shadow:0 0 30px #00ff88;}
 </style>
 </head>
 <body>
@@ -90,25 +95,29 @@
 
 <div id="hud">
   <div id="p1-ui" class="health-container">
-    <div class="name" style="color:#00ffff">PEMAIN 1</div>
+    <div class="name" style="color:#00ffff">PEMAIN 1 (AWAK)</div>
     <div class="health-bar"><div class="health-fill" id="p1-fill"></div></div>
   </div>
   <div id="p2-ui" class="health-container">
-    <div class="name" style="color:#ff0055" id="p2-name">PENENTANG</div>
+    <div class="name" style="color:#ff0055">PEMAIN 2 (LAWAN)</div>
     <div class="health-bar"><div class="health-fill" id="p2-fill"></div></div>
   </div>
   <div id="comboText">SLAM!</div>
 </div>
 
-<!-- Kawalan 2 Pemain -->
+<!-- Kawalan Sentuh -->
 <div id="controls">
   <div id="p1-controls">
+    <div class="btn up" data-k="p1_forward">▲</div>
+    <div class="btn down" data-k="p1_back">▼</div>
     <div class="btn left" data-k="p1_left">◀</div>
     <div class="btn right" data-k="p1_right">▶</div>
     <div class="btn punch" data-k="p1_punch">TUMBUK</div>
     <div class="btn grapple" data-k="p1_grapple">BANTING</div>
   </div>
   <div id="p2-controls">
+    <div class="btn up" data-k="p2_forward">▲</div>
+    <div class="btn down" data-k="p2_back">▼</div>
     <div class="btn left" data-k="p2_left">◀</div>
     <div class="btn right" data-k="p2_right">▶</div>
     <div class="btn punch" data-k="p2_punch">TUMBUK</div>
@@ -118,9 +127,10 @@
 
 <div id="startScreen">
   <h1>NEON WRESTLING<br>3D</h1>
-  <p>PILIH MOD PERMAINAN</p>
-  <button class="start-btn" id="btn1P">1 PEMAIN (LAWAN BOT)</button>
-  <button class="start-btn blue" id="btn2P">2 PEMAIN (LAWAN KAWAN)</button>
+  <p>PILIH PANDANGAN AWAK</p>
+  <button class="start-btn" id="btnP1">JADI PEMAIN 1 (MUKA AWAK)</button>
+  <button class="start-btn blue" id="btnP2">JADI PEMAIN 2 (MUKA KAWAN)</button>
+  <button class="start-btn green" id="btn2P">2 PEMAIN (PANDANGAN SISI)</button>
 </div>
 
 <script type="module">
@@ -151,9 +161,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050000);
 scene.fog = new THREE.FogExp2(0x050000, 0.015);
 
-const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(0, 12, 28);
-camera.lookAt(0, 3, 0);
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 100);
 
 const renderScene = new RenderPass(scene, camera);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.2, 0.4, 0.85);
@@ -219,7 +227,7 @@ for (let i = 0; i < crowdCount; i++) {
 scene.add(crowdInstanced);
 
 /* ============================================================
-   PEMAIN GUSTI (FIX MUKA SALING MENGADAP)
+   PEMAIN GUSTI
    ============================================================ */
 const textureLoader = new THREE.TextureLoader();
 const playerFaceTex = textureLoader.load('IMG_0179.jpeg'); 
@@ -235,17 +243,7 @@ function createWrestler(colorHex, faceTexture) {
   torso.position.y = 3.5; group.add(torso);
 
   const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-  
-  // Kita pastikan gambar ada kat KIRI, KANAN, DEPAN, BELAKANG
-  const headMats = [
-    faceMat,  // Kanan (+X)
-    faceMat,  // Kiri (-X)
-    skinMat,  // Atas (+Y)
-    skinMat,  // Bawah (-Y)
-    faceMat,  // Depan (+Z)
-    faceMat   // Belakang (-Z)
-  ];
-  
+  const headMats = [faceMat, faceMat, skinMat, skinMat, faceMat, faceMat];
   const head = new THREE.Mesh(headGeo, headMats);
   head.position.y = 5; group.add(head);
 
@@ -266,35 +264,42 @@ function createWrestler(colorHex, faceTexture) {
   group.userData = {
     parts: { armL, armR, legL, legR, head, torso },
     velocity: new THREE.Vector3(),
-    health: 100, state: 'idle', stateTimer: 0, facing: 0,
+    health: 100, state: 'idle', stateTimer: 0,
   };
   return group;
 }
 
+// Kedudukan: P1 di depan (Z positif), P2 di jauh (Z negatif)
 const p1 = createWrestler(0x00ffff, playerFaceTex); 
-p1.position.set(-5, 1.5, 0); p1.userData.facing = Math.PI/2; scene.add(p1);
+p1.position.set(0, 1.5, 4); 
+p1.rotation.y = Math.PI; // Pandang -Z
+scene.add(p1);
+
 const p2 = createWrestler(0xff0055, botFaceTex);
-p2.position.set(5, 1.5, 0); p2.userData.facing = -Math.PI/2; scene.add(p2);
+p2.position.set(0, 1.5, -4); 
+p2.rotation.y = 0; // Pandang +Z
+scene.add(p2);
 
 /* ============================================================
    KAWALAN & MOD PERMAINAN
    ============================================================ */
-let gameMode = 'menu'; // 'bot' atau '2p'
+let gameMode = 'menu';
 const keys = { 
-  p1_left:false, p1_right:false, p1_punch:false, p1_grapple:false,
-  p2_left:false, p2_right:false, p2_punch:false, p2_grapple:false
+  p1_forward:false, p1_back:false, p1_left:false, p1_right:false, p1_punch:false, p1_grapple:false,
+  p2_forward:false, p2_back:false, p2_left:false, p2_right:false, p2_punch:false, p2_grapple:false
 };
 
-// Keyboard Input
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
-  // P1 Keyboard (A, D, F, G)
+  if(k==='w') keys.p1_forward = true;
+  if(k==='s') keys.p1_back = true;
   if(k==='a') keys.p1_left = true;
   if(k==='d') keys.p1_right = true;
   if(k==='f') keys.p1_punch = true;
   if(k==='g') keys.p1_grapple = true;
   
-  // P2 Keyboard (Panah Kiri/Kanan, 1, 2)
+  if(k==='arrowup') keys.p2_forward = true;
+  if(k==='arrowdown') keys.p2_back = true;
   if(k==='arrowleft') keys.p2_left = true;
   if(k==='arrowright') keys.p2_right = true;
   if(k==='1') keys.p2_punch = true;
@@ -302,18 +307,21 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => {
   const k = e.key.toLowerCase();
+  if(k==='w') keys.p1_forward = false;
+  if(k==='s') keys.p1_back = false;
   if(k==='a') keys.p1_left = false;
   if(k==='d') keys.p1_right = false;
   if(k==='f') keys.p1_punch = false;
   if(k==='g') keys.p1_grapple = false;
   
+  if(k==='arrowup') keys.p2_forward = false;
+  if(k==='arrowdown') keys.p2_back = false;
   if(k==='arrowleft') keys.p2_left = false;
   if(k==='arrowright') keys.p2_right = false;
   if(k==='1') keys.p2_punch = false;
   if(k==='2') keys.p2_grapple = false;
 });
 
-// Touch Input
 document.querySelectorAll('[data-k]').forEach(btn => {
   const k = btn.dataset.k;
   const on = e => { e.preventDefault(); keys[k] = true; btn.classList.add('active'); };
@@ -329,13 +337,16 @@ document.querySelectorAll('[data-k]').forEach(btn => {
    LOGIK GUSTI
    ============================================================ */
 const arenaLimit = 8.5;
-function updateWrestler(w, dt, isPlayer) {
+
+function updateWrestler(w, dt) {
   const ud = w.userData;
   w.position.x = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.x));
   w.position.z = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.z));
+  
   ud.velocity.y -= 30 * dt; w.position.y += ud.velocity.y * dt;
   if (w.position.y <= 1.5) { w.position.y = 1.5; ud.velocity.y = 0; }
   if(ud.stateTimer > 0) { ud.stateTimer -= dt; if(ud.stateTimer <= 0) ud.state = 'idle'; }
+  
   const parts = ud.parts;
   if (ud.state === 'hurt' || ud.state === 'grappled') {
     w.rotation.z = Math.sin(performance.now()*0.03) * 0.5;
@@ -349,7 +360,7 @@ function updateWrestler(w, dt, isPlayer) {
       parts.armL.rotation.x = 0.5;
     } else if (ud.state === 'slam') {
       parts.armR.rotation.x = -Math.PI; parts.armL.rotation.x = -Math.PI;
-    } else if (Math.abs(ud.velocity.x) > 0.5) {
+    } else if (Math.abs(ud.velocity.x) > 0.5 || Math.abs(ud.velocity.z) > 0.5) {
       const cycle = performance.now() * 0.015;
       parts.legL.rotation.x = Math.sin(cycle) * 0.8; parts.legR.rotation.x = -Math.sin(cycle) * 0.8;
       parts.armL.rotation.x = -Math.sin(cycle) * 0.5; parts.armR.rotation.x = Math.sin(cycle) * 0.5;
@@ -358,35 +369,37 @@ function updateWrestler(w, dt, isPlayer) {
       parts.armL.rotation.x *= 0.8; parts.armR.rotation.x *= 0.8;
     }
   }
-  ud.velocity.x *= 0.85; w.position.x += ud.velocity.x * dt;
-  
-  // Saling mengadap muka
-  const opponent = isPlayer ? p2 : p1;
-  if (opponent.position.x > w.position.x) { w.userData.facing = Math.PI/2; } 
-  else { w.userData.facing = -Math.PI/2; }
-  w.rotation.y = w.userData.facing;
+  ud.velocity.x *= 0.85; ud.velocity.z *= 0.85; 
+  w.position.x += ud.velocity.x * dt;
+  w.position.z += ud.velocity.z * dt;
 }
 
 function handleP1Input(dt) {
   const ud = p1.userData;
   if (ud.state === 'hurt') return;
-  if (keys.p1_left) ud.velocity.x = -8;
-  if (keys.p1_right) ud.velocity.x = 8;
   
-  const dist = Math.abs(p1.position.x - p2.position.x);
+  let speed = (gameMode === 'local') ? 8 : 6; // FPP gerak lebih perlahan sikit
+  
+  if (keys.p1_forward) ud.velocity.z = -speed;
+  if (keys.p1_back) ud.velocity.z = speed;
+  if (keys.p1_left) ud.velocity.x = -speed;
+  if (keys.p1_right) ud.velocity.x = speed;
+  
+  const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
+  
   if (keys.p1_punch && ud.stateTimer <= 0 && dist < 3.5) {
     ud.state = 'punch'; ud.stateTimer = 0.3; p2.userData.health -= 8;
     p2.userData.state = 'hurt'; p2.userData.stateTimer = 0.3;
-    p2.userData.velocity.x = (p2.position.x > p1.position.x ? 1 : -1) * 10;
-    updateHealthUI(); playPunchSound(); showComboText("P1 PUNCH!"); keys.p1_punch = false;
+    p2.userData.velocity.z = 8; 
+    updateHealthUI(); playPunchSound(); showComboText("TUMBUK!"); keys.p1_punch = false;
   }
   if (keys.p1_grapple && ud.stateTimer <= 0 && dist < 2.5) {
     ud.state = 'slam'; ud.stateTimer = 1.0; p2.userData.state = 'grappled'; p2.userData.stateTimer = 1.2;
-    p2.position.x = p1.position.x; p2.position.y = 4.5;
+    p2.position.x = p1.position.x; p2.position.z = p1.position.z; p2.position.y = 4.5;
     setTimeout(() => {
       p2.position.y = 1.5; p2.userData.health -= 30; p2.userData.velocity.y = -10;
-      p2.userData.velocity.x = (p2.position.x > p1.position.x ? 5 : -5);
-      updateHealthUI(); playPunchSound(); showComboText("P1 SLAM!"); createHitEffect(p2.position, 0xffcc00);
+      p2.userData.velocity.z = -10;
+      updateHealthUI(); playPunchSound(); showComboText("BANTING!"); createHitEffect(p2.position, 0xffcc00);
     }, 800); keys.p1_grapple = false;
   }
 }
@@ -394,37 +407,46 @@ function handleP1Input(dt) {
 function handleP2Input(dt) {
   const ud = p2.userData;
   if (ud.state === 'hurt') return;
-  if (keys.p2_left) ud.velocity.x = -8;
-  if (keys.p2_right) ud.velocity.x = 8;
   
-  const dist = Math.abs(p1.position.x - p2.position.x);
+  let speed = 8;
+  if (keys.p2_forward) ud.velocity.z = speed;
+  if (keys.p2_back) ud.velocity.z = -speed;
+  if (keys.p2_left) ud.velocity.x = -speed;
+  if (keys.p2_right) ud.velocity.x = speed;
+  
+  const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
+  
   if (keys.p2_punch && ud.stateTimer <= 0 && dist < 3.5) {
     ud.state = 'punch'; ud.stateTimer = 0.3; p1.userData.health -= 8;
     p1.userData.state = 'hurt'; p1.userData.stateTimer = 0.3;
-    p1.userData.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 10;
-    updateHealthUI(); playPunchSound(); showComboText("P2 PUNCH!"); keys.p2_punch = false;
+    p1.userData.velocity.z = -8;
+    updateHealthUI(); playPunchSound(); showComboText("P2 TUMBUK!"); keys.p2_punch = false;
   }
   if (keys.p2_grapple && ud.stateTimer <= 0 && dist < 2.5) {
     ud.state = 'slam'; ud.stateTimer = 1.0; p1.userData.state = 'grappled'; p1.userData.stateTimer = 1.2;
-    p1.position.x = p2.position.x; p1.position.y = 4.5;
+    p1.position.x = p2.position.x; p1.position.z = p2.position.z; p1.position.y = 4.5;
     setTimeout(() => {
       p1.position.y = 1.5; p1.userData.health -= 30; p1.userData.velocity.y = -10;
-      p1.userData.velocity.x = (p1.position.x > p2.position.x ? 5 : -5);
-      updateHealthUI(); playPunchSound(); showComboText("P2 SLAM!"); createHitEffect(p1.position, 0x00ffff);
+      p1.userData.velocity.z = 10;
+      updateHealthUI(); playPunchSound(); showComboText("P2 BANTING!"); createHitEffect(p1.position, 0x00ffff);
     }, 800); keys.p2_grapple = false;
   }
 }
 
-function handleBotAI(dt) {
-  const ud = p2.userData;
+function handleBotAI(bot, target, dt) {
+  const ud = bot.userData;
   if (ud.state === 'hurt' || ud.state === 'grappled') return;
-  const dist = Math.abs(p2.position.x - p1.position.x);
-  if (dist > 3) { ud.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 6; } 
-  else {
+  const dist = Math.hypot(target.position.x - bot.position.x, target.position.z - bot.position.z);
+  
+  if (dist > 3) { 
+    // Dekati target
+    ud.velocity.x = (target.position.x > bot.position.x ? 1 : -1) * 5;
+    ud.velocity.z = (target.position.z > bot.position.z ? 1 : -1) * 5;
+  } else {
     if (ud.stateTimer <= 0 && Math.random() < 0.05) {
-      ud.state = 'punch'; ud.stateTimer = 0.3; p1.userData.health -= 8;
-      p1.userData.state = 'hurt'; p1.userData.stateTimer = 0.3;
-      p1.userData.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 10;
+      ud.state = 'punch'; ud.stateTimer = 0.3; target.userData.health -= 8;
+      target.userData.state = 'hurt'; target.userData.stateTimer = 0.3;
+      target.userData.velocity.z = (target.position.z > bot.position.z ? 1 : -1) * 8;
       updateHealthUI(); playPunchSound();
     }
   }
@@ -473,11 +495,12 @@ function checkGameOver() {
     
     setTimeout(() => {
       p1.userData.health = 100; p2.userData.health = 100;
-      p1.position.set(-5, 1.5, 0); p2.position.set(5, 1.5, 0);
+      p1.position.set(0, 1.5, 4); p2.position.set(0, 1.5, -4);
+      p1.rotation.set(0, Math.PI, 0); p2.rotation.set(0, 0, 0);
       p1.userData.velocity.set(0,0,0); p2.userData.velocity.set(0,0,0);
       p1.userData.state = 'idle'; p2.userData.state = 'idle';
       p1.userData.stateTimer = 0; p2.userData.stateTimer = 0;
-      gameMode = document.getElementById('p2-name').textContent === 'PENENTANG' ? 'bot' : '2p'; 
+      gameMode = window.currentMode || 'p1';
       updateHealthUI();
     }, 3000);
   }
@@ -488,29 +511,60 @@ function animate() {
   const now = performance.now(); let dt = (now - last) / 1000; last = now;
   if(dt > 0.05) dt = 0.05;
   
-  if(gameMode === 'bot') {
-    handleP1Input(dt); handleBotAI(dt);
-    updateWrestler(p1, dt, true); updateWrestler(p2, dt, false); checkGameOver();
-  } else if (gameMode === '2p') {
+  if(gameMode === 'p1') {
+    // KAMERA FIRST PERSON (Jadi Pemain 1)
+    camera.position.set(p1.position.x, 4.8, p1.position.z - 0.5);
+    camera.lookAt(p2.position.x, 4.5, p2.position.z);
+    
+    // Sembunyikan badan P1
+    p1.userData.parts.head.visible = false;
+    p1.userData.parts.torso.visible = false;
+    
+    handleP1Input(dt); handleBotAI(p2, p1, dt);
+    
+  } else if (gameMode === 'p2') {
+    // KAMERA FIRST PERSON (Jadi Pemain 2)
+    camera.position.set(p2.position.x, 4.8, p2.position.z + 0.5);
+    camera.lookAt(p1.position.x, 4.5, p1.position.z);
+    
+    // Sembunyikan badan P2
+    p2.userData.parts.head.visible = false;
+    p2.userData.parts.torso.visible = false;
+    
+    handleP2Input(dt); handleBotAI(p1, p2, dt);
+    
+  } else if (gameMode === 'local') {
+    // PANDANGAN SISI (2 Pemain)
+    const midX = (p1.position.x + p2.position.x) / 2;
+    const midZ = (p1.position.z + p2.position.z) / 2;
+    const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
+    
+    const targetCamZ = midZ + 14 + dist * 0.3;
+    camera.position.x += (midX - camera.position.x) * dt * 3;
+    camera.position.z += (targetCamZ - camera.position.z) * dt * 3;
+    camera.position.y = 6;
+    camera.lookAt(midX, 4, midZ);
+    
+    p1.userData.parts.head.visible = true; p1.userData.parts.torso.visible = true;
+    p2.userData.parts.head.visible = true; p2.userData.parts.torso.visible = true;
+    
     handleP1Input(dt); handleP2Input(dt);
-    updateWrestler(p1, dt, true); updateWrestler(p2, dt, false); checkGameOver();
+  }
+  
+  if (gameMode !== 'menu') {
+    updateWrestler(p1, dt); updateWrestler(p2, dt); checkGameOver();
   }
   
   updateParticles(dt);
+  
+  // Penonton melompat
   const time = now * 0.005;
   for(let i=0; i<crowdCount; i++) {
     const data = crowdData[i]; dummy.position.y = data.baseY + Math.abs(Math.sin(time + data.phase)) * 0.5;
     dummy.updateMatrix(); crowdInstanced.setMatrixAt(i, dummy.matrix);
   }
   crowdInstanced.instanceMatrix.needsUpdate = true;
-  
-  const midX = (p1.position.x + p2.position.x) / 2;
-  const distX = Math.abs(p1.position.x - p2.position.x);
-  const targetCamZ = 25 + distX * 0.5; const targetCamY = 10 + distX * 0.2;
-  camera.position.x += (midX - camera.position.x) * dt * 3;
-  camera.position.z += (targetCamZ - camera.position.z) * dt * 2;
-  camera.position.y += (targetCamY - camera.position.y) * dt * 2;
-  camera.lookAt(midX, 3, 0);
+
   composer.render();
 }
 
@@ -523,21 +577,42 @@ addEventListener('resize', () => {
 function startGame(mode) {
   initAudio();
   gameMode = mode;
+  window.currentMode = mode;
   document.getElementById('startScreen').classList.add('hide');
   document.getElementById('controls').style.display = 'block';
   
-  if(mode === 'bot') {
-    document.getElementById('p2-name').textContent = 'PENENTANG';
+  // Reset posisi
+  p1.position.set(0, 1.5, 4); p1.rotation.set(0, Math.PI, 0);
+  p2.position.set(0, 1.5, -4); p2.rotation.set(0, 0, 0);
+  p1.userData.health = 100; p2.userData.health = 100;
+  updateHealthUI();
+
+  if(mode === 'p1') {
+    document.getElementById('p1-controls').style.display = 'block';
     document.getElementById('p2-controls').style.display = 'none';
-  } else {
-    document.getElementById('p2-name').textContent = 'PEMAIN 2';
+    // Tunjuk butang Maju/Undur
+    document.querySelector('#p1-controls .up').style.display = 'flex';
+    document.querySelector('#p1-controls .down').style.display = 'flex';
+  } else if(mode === 'p2') {
+    document.getElementById('p1-controls').style.display = 'none';
     document.getElementById('p2-controls').style.display = 'block';
+    document.querySelector('#p2-controls .up').style.display = 'flex';
+    document.querySelector('#p2-controls .down').style.display = 'flex';
+  } else {
+    document.getElementById('p1-controls').style.display = 'block';
+    document.getElementById('p2-controls').style.display = 'block';
+    // Sembunyi butang Maju/Undur untuk mod sisi
+    document.querySelector('#p1-controls .up').style.display = 'none';
+    document.querySelector('#p1-controls .down').style.display = 'none';
+    document.querySelector('#p2-controls .up').style.display = 'none';
+    document.querySelector('#p2-controls .down').style.display = 'none';
   }
   last = performance.now();
 }
 
-document.getElementById('btn1P').addEventListener('click', () => startGame('bot'));
-document.getElementById('btn2P').addEventListener('click', () => startGame('2p'));
+document.getElementById('btnP1').addEventListener('click', () => startGame('p1'));
+document.getElementById('btnP2').addEventListener('click', () => startGame('p2'));
+document.getElementById('btn2P').addEventListener('click', () => startGame('local'));
 
 updateHealthUI(); animate();
 </script>
