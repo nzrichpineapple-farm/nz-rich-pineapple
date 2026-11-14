@@ -4,12 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>DRIVE SIM 3D</title>
+<link rel="icon" type="image/jpeg" href="logo.jpeg.JPG">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:#000;
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     user-select:none;-webkit-user-select:none;touch-action:none}
   canvas{display:block}
+
+  /* ---- FIX UNTUK IPHONE (Supaya butang boleh ditekan) ---- */
+  button, #start, .card {
+    touch-action: manipulation !important;
+    pointer-events: auto !important;
+  }
 
   /* ---- Vignette kokpit ---- */
   #vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
@@ -35,6 +42,10 @@
   .brand{position:absolute;left:22px;top:20px;color:#fff;opacity:.55;
     font-size:12px;letter-spacing:4px;font-weight:700;text-shadow:0 2px 10px #000}
   .brand span{color:#2ee6a8}
+
+  /* ---- Misi HUD ---- */
+  #misi { position:absolute; top:60px; width:100%; text-align:center; color:#fff; 
+          font-weight:bold; font-size:16px; text-shadow:0 2px 5px #000; z-index:20; transition: color 0.3s;}
 
   /* ---- Butang sentuh ---- */
   .touch{position:absolute;inset:auto 0 0 0;height:190px;display:none;
@@ -80,6 +91,10 @@
 
 <div id="hud">
   <div class="brand">DRIVE<span>SIM</span></div>
+  
+  <!-- TEKS MISI BARU -->
+  <div id="misi">Misi: Pandu ke penanda hijau!</div>
+
   <div class="speedo">
     <div class="spd-val"><span id="spdNum">0</span><small>KM/H</small></div>
     <div class="bar"><i id="spdBar"></i></div>
@@ -114,7 +129,8 @@
 </div>
 
 <script type="module">
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+// KITA TUKAR KE CDN JSDELIVR (Lagi laju & stabil)
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 /* =====================================================================
    RENDERER / SCENE / CAMERA
@@ -195,6 +211,15 @@ for (let i = 0; i < 64; i++) {
   scene.add(d);
   dashes.push(d);
 }
+
+/* =====================================================================
+   PENANDA MISI (MARKER)
+   ===================================================================== */
+const markerGeo = new THREE.CylinderGeometry(3, 3, 0.1, 32);
+const markerMat = new THREE.MeshBasicMaterial({color:0x2ee6a8, transparent:true, opacity:0.6});
+const missionMarker = new THREE.Mesh(markerGeo, markerMat);
+missionMarker.position.set(0, 0.05, -150); // Letak penanda 150 meter ke depan
+scene.add(missionMarker);
 
 /* =====================================================================
    POKOK
@@ -442,6 +467,7 @@ function updateAudio(rpm, load) {
 const spdNum = document.getElementById('spdNum');
 const spdBar = document.getElementById('spdBar');
 const gearNum = document.getElementById('gearNum');
+const misiText = document.getElementById('misi');
 
 /* =====================================================================
    LOOP UTAMA
@@ -511,6 +537,24 @@ function update(dt) {
     }
   }
 
+  /* ---- SEMAK MISI ---- */
+  const jarakKePenanda = Math.hypot(CAR.x - missionMarker.position.x, CAR.z - missionMarker.position.z);
+  
+  if (jarakKePenanda < 3.5) {
+      misiText.innerText = "🎉 Misi Selesai! Sampai ke destinasi.";
+      misiText.style.color = "#2ee6a8";
+      
+      // Alihkan penanda ke tempat baru (lebih jauh)
+      missionMarker.position.z = CAR.z - 250 - Math.random()*100; 
+      missionMarker.position.x = (Math.random() - 0.5) * (ROAD_W - 4);
+      
+      // Reset teks selepas 3 saat
+      setTimeout(() => {
+          misiText.innerText = "Misi Baru: Pandu ke penanda hijau!";
+          misiText.style.color = "#fff";
+      }, 3000);
+  }
+
   /* ---- HUD ---- */
   const kmh = CAR.speed * 3.6;
   spdNum.textContent = Math.round(kmh);
@@ -557,17 +601,25 @@ const startScreen = document.getElementById('start');
 const startBtn    = document.getElementById('startBtn');
 const soundBtn    = document.getElementById('sound');
 
-startBtn.addEventListener('click', () => {
+// FIX UNTUK IPHONE (Tambah 'touchstart' supaya butang boleh ditekan)
+const startGame = () => {
   initAudio();
   startScreen.classList.add('hide');
   soundBtn.classList.add('show');
   last = performance.now();
-});
+};
+
+startBtn.addEventListener('click', startGame);
+startBtn.addEventListener('touchstart', startGame, {passive: true});
 
 soundBtn.addEventListener('click', () => {
   muted = !muted;
   soundBtn.textContent = muted ? '🔇' : '🔊';
 });
+soundBtn.addEventListener('touchstart', () => {
+  muted = !muted;
+  soundBtn.textContent = muted ? '🔇' : '🔊';
+}, {passive: true});
 
 animate();
 </script>
