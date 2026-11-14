@@ -9,13 +9,17 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:#000;
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    user-select:none;-webkit-user-select:none;touch-action:none}
-  canvas{display:block}
+    user-select:none;-webkit-user-select:none;}
+  
+  /* KUNCI UTAMA: Buang touch-action:none dari body. */
+  /* Hanya kanvas dan kawalan sentuh yang perlukan ia. */
+  canvas{display:block; touch-action:none;} 
 
-  /* ---- FIX UNTUK IPHONE (Supaya butang boleh ditekan) ---- */
+  /* Pastikan butang boleh menerima sentuhan */
   button, #start, .card {
     touch-action: manipulation !important;
     pointer-events: auto !important;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ---- Vignette kokpit ---- */
@@ -59,10 +63,11 @@
   @media (hover:none) and (pointer:coarse){ .touch{display:flex} }
 
   /* ---- Skrin mula ---- */
-  #start{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+  #start{position:fixed;inset:0;z-index:1000; /* Z-index sangat tinggi supaya kanvas tidak menutupi */
+    display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 50% 40%,#0e2a33,#04080b 75%);
     transition:opacity .45s ease,visibility .45s}
-  #start.hide{opacity:0;visibility:hidden}
+  #start.hide{opacity:0;visibility:hidden; pointer-events:none;}
   .card{width:min(90vw,400px);padding:34px 28px;border-radius:22px;text-align:center;
     background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);
     box-shadow:0 30px 80px rgba(0,0,0,.6);color:#fff;backdrop-filter:blur(10px)}
@@ -92,7 +97,6 @@
 <div id="hud">
   <div class="brand">DRIVE<span>SIM</span></div>
   
-  <!-- TEKS MISI BARU -->
   <div id="misi">Misi: Pandu ke penanda hijau!</div>
 
   <div class="speedo">
@@ -129,7 +133,6 @@
 </div>
 
 <script type="module">
-// KITA TUKAR KE CDN JSDELIVR (Lagi laju & stabil)
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 /* =====================================================================
@@ -149,7 +152,7 @@ scene.fog = new THREE.Fog(SKY, 90, 300);
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.05, 900);
 camera.rotation.order = 'YXZ';
-scene.add(camera);            // WAJIB: supaya anak-anak camera dirender
+scene.add(camera);
 
 /* =====================================================================
    CAHAYA
@@ -164,10 +167,10 @@ scene.add(sun);
    ===================================================================== */
 const ROAD_W = 14;
 const WRAP   = 640;
-const MAX_SPEED = 58;          // m/s  (~209 km/h)
+const MAX_SPEED = 58;
 
 const CAR = { x:0, z:0, heading:0, speed:0 };
-let steer = 0;                 // -1 .. 1 (dilajurkan)
+let steer = 0;
 
 /* =====================================================================
    JALAN
@@ -182,7 +185,6 @@ const roadMesh = new THREE.Mesh(
 roadMesh.rotation.x = -Math.PI/2;
 roadGroup.add(roadMesh);
 
-// garisan tepi
 const edgeMat = new THREE.MeshBasicMaterial({color:0xe8e8dc});
 for (const s of [-1,1]) {
   const e = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 800), edgeMat);
@@ -191,7 +193,6 @@ for (const s of [-1,1]) {
   roadGroup.add(e);
 }
 
-// rumput
 const grass = new THREE.Mesh(
   new THREE.PlaneGeometry(1400, 1400),
   new THREE.MeshStandardMaterial({color:0x4f7a3d, roughness:1})
@@ -200,7 +201,6 @@ grass.rotation.x = -Math.PI/2;
 grass.position.y = -0.03;
 scene.add(grass);
 
-/* ---- garis tengah putus-putus ---- */
 const dashGeo = new THREE.PlaneGeometry(0.3, 4.5);
 const dashMat = new THREE.MeshBasicMaterial({color:0xf2f2e2});
 const dashes = [];
@@ -218,7 +218,7 @@ for (let i = 0; i < 64; i++) {
 const markerGeo = new THREE.CylinderGeometry(3, 3, 0.1, 32);
 const markerMat = new THREE.MeshBasicMaterial({color:0x2ee6a8, transparent:true, opacity:0.6});
 const missionMarker = new THREE.Mesh(markerGeo, markerMat);
-missionMarker.position.set(0, 0.05, -150); // Letak penanda 150 meter ke depan
+missionMarker.position.set(0, 0.05, -150);
 scene.add(missionMarker);
 
 /* =====================================================================
@@ -260,7 +260,7 @@ for (let i = 0; i < 50; i++) {
 }
 
 /* =====================================================================
-   BANGUNAN (dengan tekstur tingkap)
+   BANGUNAN
    ===================================================================== */
 function windowTexture() {
   const c = document.createElement('canvas');
@@ -308,13 +308,11 @@ for (let i = 0; i < 16; i++) {
 const cockpit = new THREE.Group();
 camera.add(cockpit);
 
-// papan pemuka
 const dashMat = new THREE.MeshStandardMaterial({color:0x191b20, roughness:0.95});
 const dashboard = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.34, 0.6), dashMat);
 dashboard.position.set(0, -0.44, -0.66);
 cockpit.add(dashboard);
 
-// kepuk stereng
 const wheelTilt = new THREE.Group();
 wheelTilt.position.set(0, -0.295, -0.5);
 wheelTilt.rotation.x = -0.42;
@@ -323,22 +321,19 @@ cockpit.add(wheelTilt);
 const wheelSpin = new THREE.Group();
 wheelTilt.add(wheelSpin);
 
-const R = 0.172;                                  // jejari stereng
+const R = 0.172;
 const wheelMat = new THREE.MeshStandardMaterial({color:0x14161a, roughness:0.62, metalness:0.15});
 const rimMat   = new THREE.MeshStandardMaterial({color:0x2a2f38, roughness:0.5, metalness:0.35});
 
-// rim
 const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.023, 10, 52), wheelMat);
 wheelSpin.add(rim);
 
-// 3 jejari
 const spokeGeo = new THREE.BoxGeometry(R - 0.02, 0.036, 0.03);
 const spokeL = new THREE.Mesh(spokeGeo, rimMat); spokeL.position.x = -(R-0.02)/2; wheelSpin.add(spokeL);
 const spokeR = new THREE.Mesh(spokeGeo, rimMat); spokeR.position.x =  (R-0.02)/2; wheelSpin.add(spokeR);
 const spokeD = new THREE.Mesh(new THREE.BoxGeometry(0.036, R-0.02, 0.03), rimMat);
 spokeD.position.y = -(R-0.02)/2; wheelSpin.add(spokeD);
 
-// hab tengah
 const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.032, 20), rimMat);
 hub.rotation.x = Math.PI/2;
 wheelSpin.add(hub);
@@ -347,7 +342,6 @@ const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.036, 12),
 badge.rotation.x = Math.PI/2;
 wheelSpin.add(badge);
 
-// penanda merah di atas
 const marker = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.026),
   new THREE.MeshStandardMaterial({color:0xd8342e, roughness:0.5}));
 marker.position.y = R;
@@ -357,34 +351,25 @@ wheelSpin.add(marker);
 const skinMat   = new THREE.MeshStandardMaterial({color:0xd7a173, roughness:0.85});
 const sleeveMat = new THREE.MeshStandardMaterial({color:0x24313f, roughness:0.95});
 
-function makeHand(side) {          // side: -1 kiri, +1 kanan
+function makeHand(side) {
   const g = new THREE.Group();
-
-  // tapak tangan (di luar rim)
   const palm = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.105, 0.07), skinMat);
   palm.position.set(side*0.036, -0.004, 0.016);
   g.add(palm);
-
-  // 4 jari melingkari rim
   for (let i = 0; i < 4; i++) {
     const f = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.019, 0.052), skinMat);
     f.position.set(-side*0.006, 0.032 - i*0.0235, 0.026);
     g.add(f);
   }
-
-  // ibu jari
   const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.055, 0.03), skinMat);
   thumb.position.set(side*0.014, 0.062, 0.028);
   thumb.rotation.z = -side*0.42;
   g.add(thumb);
-
-  // lengan bawah
   const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.05, 0.34, 9), sleeveMat);
-  arm.rotation.x = 2.214;          // menghala ke bawah & ke pemandu
+  arm.rotation.x = 2.214;
   arm.rotation.z = -side*0.22;
   arm.position.set(side*0.045, -0.11, 0.135);
   g.add(arm);
-
   g.position.set(side*R, 0, 0);
   return g;
 }
@@ -478,13 +463,11 @@ let clockT = 0;
 function update(dt) {
   clockT += dt;
 
-  /* ---- stereng ---- */
   let steerTarget = 0;
   if (keys.left)  steerTarget -= 1;
   if (keys.right) steerTarget += 1;
   steer += (steerTarget - steer) * Math.min(1, dt * 7.5);
 
-  /* ---- kelajuan ---- */
   const onRoad  = Math.abs(CAR.x) < ROAD_W/2 - 0.3;
   const topSpd  = onRoad ? MAX_SPEED : 16;
 
@@ -496,23 +479,19 @@ function update(dt) {
 
   CAR.speed = Math.max(0, Math.min(CAR.speed, topSpd));
 
-  /* ---- pergerakan ---- */
-  const sf = Math.min(1, CAR.speed / 10);          // makin laju, makin responsif
+  const sf = Math.min(1, CAR.speed / 10);
   CAR.heading -= steer * 0.92 * sf * dt;
 
   CAR.x += -Math.sin(CAR.heading) * CAR.speed * dt;
   CAR.z += -Math.cos(CAR.heading) * CAR.speed * dt;
   CAR.x = Math.max(-46, Math.min(46, CAR.x));
 
-  /* ---- kamera ---- */
   const shake = Math.sin(clockT * 11) * 0.0035 * (CAR.speed / MAX_SPEED);
   camera.position.set(CAR.x, 1.2 + shake, CAR.z);
   camera.rotation.set(0, CAR.heading, -steer * 0.042);
 
-  /* ---- stereng visual ---- */
   wheelSpin.rotation.z = -steer * 1.85;
 
-  /* ---- dunia bergerak ---- */
   roadGroup.position.z = CAR.z - 380;
   grass.position.set(CAR.x * 0.15, -0.03, CAR.z - 300);
 
@@ -544,11 +523,9 @@ function update(dt) {
       misiText.innerText = "🎉 Misi Selesai! Sampai ke destinasi.";
       misiText.style.color = "#2ee6a8";
       
-      // Alihkan penanda ke tempat baru (lebih jauh)
       missionMarker.position.z = CAR.z - 250 - Math.random()*100; 
       missionMarker.position.x = (Math.random() - 0.5) * (ROAD_W - 4);
       
-      // Reset teks selepas 3 saat
       setTimeout(() => {
           misiText.innerText = "Misi Baru: Pandu ke penanda hijau!";
           misiText.style.color = "#fff";
@@ -569,7 +546,6 @@ function update(dt) {
   if (kmh > 164) gear = '6';
   gearNum.textContent = gear;
 
-  /* ---- audio ---- */
   const rpm = Math.min(1, (kmh % 32) / 32 * 0.75 + (kmh / 215) * 0.45);
   updateAudio(rpm, keys.up ? 1 : 0);
 }
@@ -601,25 +577,24 @@ const startScreen = document.getElementById('start');
 const startBtn    = document.getElementById('startBtn');
 const soundBtn    = document.getElementById('sound');
 
-// FIX UNTUK IPHONE (Tambah 'touchstart' supaya butang boleh ditekan)
-const startGame = () => {
+// FIX UNTUK IPHONE: Guna 'pointerdown' dan 'touchstart'
+const startGame = (e) => {
+  if(e) e.preventDefault(); // Elak double-trigger
   initAudio();
   startScreen.classList.add('hide');
   soundBtn.classList.add('show');
   last = performance.now();
 };
 
-startBtn.addEventListener('click', startGame);
-startBtn.addEventListener('touchstart', startGame, {passive: true});
+startBtn.addEventListener('pointerdown', startGame);
+startBtn.addEventListener('touchstart', startGame, {passive: false});
+startBtn.addEventListener('click', startGame); // Fallback untuk desktop
 
-soundBtn.addEventListener('click', () => {
+soundBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
   muted = !muted;
   soundBtn.textContent = muted ? '🔇' : '🔊';
 });
-soundBtn.addEventListener('touchstart', () => {
-  muted = !muted;
-  soundBtn.textContent = muted ? '🔇' : '🔊';
-}, {passive: true});
 
 animate();
 </script>
