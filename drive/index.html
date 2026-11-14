@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>NEON WRESTLING 3D: PRO FIGHT V2</title>
+<title>NEON BOXING 3D: PRO EDITION</title>
 <script type="importmap">
 {
   "imports": {
@@ -19,20 +19,23 @@
     position:fixed;top:0;left:0;color:#fff}
   canvas{display:block}
 
+  /* Red Flash Overlay */
+  #bloodOverlay{position:fixed;inset:0;pointer-events:none;z-index:50;
+    background:radial-gradient(circle, transparent 30%, rgba(200,0,0,0.8) 100%);
+    opacity:0;transition:opacity 0.15s ease-out}
+  #bloodOverlay.show{opacity:1}
+
   /* Amaran Landscape */
   #rotateWarn{position:fixed;inset:0;z-index:9999;background:#050510;
     display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  #rotateWarn h2{color:#ff0055;margin-bottom:10px;font-size:28px;text-shadow:0 0 20px #ff0055;letter-spacing:2px}
+  #rotateWarn h2{color:#00ffff;margin-bottom:10px;font-size:28px;text-shadow:0 0 20px #00ffff;letter-spacing:2px}
+  #rotateWarn p{opacity:0.7;font-size:14px}
   @media (orientation: portrait) { #rotateWarn{display:flex} }
 
   /* HUD */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
   
-  /* Crosshair (Tengah Skrin) */
-  #crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);
-    width:20px;height:20px;border:2px solid rgba(255,255,255,0.5);border-radius:50%;display:none}
-
-  .stats-container{position:absolute;top:20px;width:40%;display:flex;flex-direction:column;gap:8px}
+  .stats-container{position:absolute;top:20px;width:35%;display:flex;flex-direction:column;gap:8px}
   #p1-ui{left:20px;align-items:flex-start}
   #p2-ui{right:20px;align-items:flex-end}
   
@@ -46,7 +49,7 @@
   #p2-ui .health-fill{background:linear-gradient(90deg,#ff0055,#ff00aa);box-shadow:0 0 15px #ff0055;margin-left:auto}
   #p2-ui .bar-bg{transform:scaleX(-1)}
 
-  .stamina-bg{width:70%;height:8px;margin-top:2px}
+  .stamina-bg{width:60%;height:8px;margin-top:2px}
   .stamina-fill{height:100%;width:100%;background:#ffcc00;transition:width .1s ease-out;border-radius:4px}
   #p2-ui .stamina-bg{transform:scaleX(-1);margin-left:auto;margin-right:0}
 
@@ -59,42 +62,39 @@
   #controls{position:fixed;inset:0;pointer-events:none;z-index:20;display:none}
   .btn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.3);
     background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
-    font-weight:900;font-size:14px;color:#fff;transition:transform .1s, background .1s;
+    font-weight:900;font-size:12px;color:#fff;transition:transform .1s, background .1s;
     box-shadow:0 0 15px rgba(0,0,0,0.5);text-align:center}
   .btn.active{transform:scale(.9);background:rgba(255,255,255,.3)}
   .btn:disabled{opacity:0.3;pointer-events:none;filter:grayscale(1)}
 
   /* P1 Kawalan (Kiri) */
   #p1-controls{position:absolute;bottom:20px;left:20px;width:180px;height:180px}
-  #p1-controls .up{left:60px;bottom:60px;width:60px;height:60px;display:none}
-  #p1-controls .down{left:60px;bottom:0px;width:60px;height:60px;display:none}
+  #p1-controls .up{left:60px;bottom:60px;width:60px;height:60px}
+  #p1-controls .down{left:60px;bottom:0px;width:60px;height:60px}
   #p1-controls .left{left:0;bottom:30px;width:60px;height:60px}
   #p1-controls .right{left:120px;bottom:30px;width:60px;height:60px}
-  #p1-controls .punch{left:60px;bottom:100px;width:70px;height:70px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
-  #p1-controls .grapple{left:130px;bottom:100px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
 
   /* P2 Kawalan (Kanan) */
-  #p2-controls{position:absolute;bottom:20px;right:20px;width:180px;height:180px}
-  #p2-controls .up{right:60px;bottom:60px;width:60px;height:60px;display:none}
-  #p2-controls .down{right:60px;bottom:0px;width:60px;height:60px;display:none}
-  #p2-controls .left{right:120px;bottom:30px;width:60px;height:60px}
-  #p2-controls .right{right:0;bottom:30px;width:60px;height:60px}
-  #p2-controls .punch{right:60px;bottom:100px;width:70px;height:70px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
-  #p2-controls .grapple{right:130px;bottom:100px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
+  #p2-controls{position:absolute;bottom:20px;right:20px;width:220px;height:180px}
+  #p2-controls .jab{right:100px;bottom:0px;width:70px;height:70px;background:rgba(0,255,255,.2);border-color:#00ffff;color:#00ffff}
+  #p2-controls .hook{right:20px;bottom:0px;width:70px;height:70px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
+  #p2-controls .uppercut{right:60px;bottom:80px;width:70px;height:70px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055}
+  #p2-controls .block{right:170px;bottom:60px;width:60px;height:60px;border-radius:50%;border-color:#aaa;color:#aaa;font-size:16px}
 
-  #startScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at center, #220000, #000);
+  #startScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at center, #002222, #000);
     display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s;padding:20px}
   #startScreen.hide{opacity:0;pointer-events:none}
-  #startScreen h1{font-size:36px;color:#ffcc00;text-shadow:0 0 20px #ffcc00, 0 0 40px #ff8800;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
+  #startScreen h1{font-size:36px;color:#00ffff;text-shadow:0 0 20px #00ffff, 0 0 40px #0088ff;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
   #startScreen p{opacity:0.7;margin-bottom:20px;letter-spacing:1px}
   
-  .start-btn{padding:15px 30px;font-size:16px;font-weight:900;color:#000;background:#ffcc00;
-    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #ffcc00;letter-spacing:2px;margin:8px;width:280px}
-  .start-btn.blue{background:#00ffff;box-shadow:0 0 30px #00ffff;}
-  .start-btn.green{background:#00ff88;box-shadow:0 0 30px #00ff88;}
+  .start-btn{padding:15px 30px;font-size:16px;font-weight:900;color:#000;background:#00ffff;
+    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #00ffff;letter-spacing:2px;margin:8px;width:280px}
+  .start-btn.blue{background:#ff0055;box-shadow:0 0 30px #ff0055;color:#fff;}
 </style>
 </head>
 <body>
+
+<div id="bloodOverlay"></div>
 
 <div id="rotateWarn">
   <h2>PUSING TELEFON</h2>
@@ -104,49 +104,39 @@
 <canvas id="game"></canvas>
 
 <div id="hud">
-  <div id="crosshair"></div>
   <div id="p1-ui" class="stats-container">
     <div class="name" style="color:#00ffff">PEMAIN 1</div>
     <div class="bar-bg"><div class="health-fill" id="p1-fill"></div></div>
     <div class="bar-bg stamina-bg"><div class="stamina-fill" id="p1-stamina"></div></div>
   </div>
   <div id="p2-ui" class="stats-container">
-    <div class="name" style="color:#ff0055" id="p2-name">PEMAIN 2</div>
+    <div class="name" style="color:#ff0055" id="p2-name">BOT / PEMAIN 2</div>
     <div class="bar-bg"><div class="health-fill" id="p2-fill"></div></div>
     <div class="bar-bg stamina-bg"><div class="stamina-fill" id="p2-stamina"></div></div>
   </div>
   <div id="roundText">ROUND 1</div>
 </div>
 
-<!-- Drag area for camera look -->
-<div id="dragArea" style="position:fixed;inset:0;z-index:15;display:none;"></div>
-
-<!-- Kawalan Sentuh -->
 <div id="controls">
   <div id="p1-controls">
     <div class="btn up" data-k="p1_forward">▲</div>
     <div class="btn down" data-k="p1_back">▼</div>
     <div class="btn left" data-k="p1_left">◀</div>
     <div class="btn right" data-k="p1_right">▶</div>
-    <div class="btn punch" data-k="p1_punch">TUMBUK</div>
-    <div class="btn grapple" data-k="p1_grapple">BANTING</div>
   </div>
   <div id="p2-controls">
-    <div class="btn up" data-k="p2_forward">▲</div>
-    <div class="btn down" data-k="p2_back">▼</div>
-    <div class="btn left" data-k="p2_left">◀</div>
-    <div class="btn right" data-k="p2_right">▶</div>
-    <div class="btn punch" data-k="p2_punch">TUMBUK</div>
-    <div class="btn grapple" data-k="p2_grapple">BANTING</div>
+    <div class="btn jab" data-k="p1_jab">JAB</div>
+    <div class="btn hook" data-k="p1_hook">HOOK</div>
+    <div class="btn uppercut" data-k="p1_uppercut">UPPER</div>
+    <div class="btn block" data-k="p1_block">🛡️</div>
   </div>
 </div>
 
 <div id="startScreen">
-  <h1>NEON WRESTLING<br>PRO FIGHT V2</h1>
-  <p>PILIH PANDANGAN AWAK</p>
-  <button class="start-btn" id="btnP1">JADI PEMAIN 1 (FPP)</button>
-  <button class="start-btn blue" id="btnP2">JADI PEMAIN 2 (FPP)</button>
-  <button class="start-btn green" id="btn2P">2 PEMAIN (SISI)</button>
+  <h1>NEON BOXING<br>3D PRO</h1>
+  <p>PILIH MOD PERMAINAN</p>
+  <button class="start-btn" id="btnP1">1 PEMAIN (LAWAN BOT)</button>
+  <button class="start-btn blue" id="btn2P">2 PEMAIN (KONGSI SKRIN)</button>
 </div>
 
 <script type="module">
@@ -158,12 +148,12 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
-function playPunchSound() {
+function playPunchSound(isHeavy) {
   if (!audioCtx) return;
   const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-  osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
-  gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+  osc.type = 'sawtooth'; osc.frequency.setValueAtTime(isHeavy ? 80 : 150, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.2);
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
   osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
 }
 function playBellSound() {
@@ -184,22 +174,20 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x050000);
 scene.fog = new THREE.FogExp2(0x050000, 0.02);
 
-const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 100);
-// Kamera rotation order untuk FPP
-camera.rotation.order = 'YXZ'; 
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
 
 const renderScene = new RenderPass(scene, camera);
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.2, 0.4, 0.85);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.0, 0.4, 0.85);
 const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const spot1 = new THREE.SpotLight(0xffffff, 3, 50, Math.PI/4, 0.5, 1);
-spot1.position.set(-10, 20, 10); spot1.target.position.set(0,0,0);
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const spot1 = new THREE.SpotLight(0xffffff, 5, 50, Math.PI/3, 0.5, 1);
+spot1.position.set(0, 20, 10); spot1.target.position.set(0,0,0);
 scene.add(spot1); scene.add(spot1.target);
-const spot2 = new THREE.SpotLight(0xff0055, 3, 50, Math.PI/4, 0.5, 1);
-spot2.position.set(10, 20, -10); spot2.target.position.set(0,0,0);
+const spot2 = new THREE.SpotLight(0xff0055, 2, 50, Math.PI/3, 0.5, 1);
+spot2.position.set(0, 15, -10); spot2.target.position.set(0,0,0);
 scene.add(spot2); scene.add(spot2.target);
 
 // GELANGGANG
@@ -209,164 +197,206 @@ const matTex = (() => {
   const c = document.createElement('canvas'); c.width = 512; c.height = 512;
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#111'; ctx.fillRect(0,0,512,512);
-  ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.arc(256,256,200,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(256,256,150,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#111'; ctx.font = 'bold 60px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('KAYANGAN', 256, 270);
+  ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(256,256,200,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.arc(256,256,100,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.font = 'bold 60px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PRO', 256, 275);
   return new THREE.CanvasTexture(c);
 })();
 const canvasMat = new THREE.MeshStandardMaterial({map: matTex, roughness: 0.8});
-const ringFloor = new THREE.Mesh(new THREE.BoxGeometry(20, 1, 20), canvasMat);
+const ringFloor = new THREE.Mesh(new THREE.BoxGeometry(16, 1, 16), canvasMat);
 ringFloor.position.y = 1; ringGroup.add(ringFloor);
 
 const postMat = new THREE.MeshStandardMaterial({color: 0x222222, metalness: 0.8});
 const ropeMat = new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5});
-const postPositions = [[-10, -10], [10, -10], [-10, 10], [10, 10]];
+const postPositions = [[-8, -8], [8, -8], [-8, 8], [8, 8]];
 for (const [x, z] of postPositions) {
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5, 8), postMat);
-  post.position.set(x, 3.5, z); ringGroup.add(post);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4, 8), postMat);
+  post.position.set(x, 3, z); ringGroup.add(post);
 }
 for (let i = 1; i <= 3; i++) {
-  const y = i * 1.5 + 0.5; const rGeoH = new THREE.CylinderGeometry(0.05, 0.05, 20, 6);
-  const r1 = new THREE.Mesh(rGeoH, ropeMat); r1.rotation.z = Math.PI/2; r1.position.set(0, y, -10); ringGroup.add(r1);
-  const r2 = new THREE.Mesh(rGeoH, ropeMat); r2.rotation.z = Math.PI/2; r2.position.set(0, y, 10); ringGroup.add(r2);
-  const r3 = new THREE.Mesh(rGeoH, ropeMat); r3.rotation.x = Math.PI/2; r3.position.set(-10, y, 0); ringGroup.add(r3);
-  const r4 = new THREE.Mesh(rGeoH, ropeMat); r4.rotation.x = Math.PI/2; r4.position.set(10, y, 0); ringGroup.add(r4);
+  const y = i * 1.2 + 0.5; const rGeoH = new THREE.CylinderGeometry(0.04, 0.04, 16, 6);
+  const r1 = new THREE.Mesh(rGeoH, ropeMat); r1.rotation.z = Math.PI/2; r1.position.set(0, y, -8); ringGroup.add(r1);
+  const r2 = new THREE.Mesh(rGeoH, ropeMat); r2.rotation.z = Math.PI/2; r2.position.set(0, y, 8); ringGroup.add(r2);
+  const r3 = new THREE.Mesh(rGeoH, ropeMat); r3.rotation.x = Math.PI/2; r3.position.set(-8, y, 0); ringGroup.add(r3);
+  const r4 = new THREE.Mesh(rGeoH, ropeMat); r4.rotation.x = Math.PI/2; r4.position.set(8, y, 0); ringGroup.add(r4);
 }
-
-// PENONTON
-const crowdCount = 300;
-const crowdGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-const crowdMat = new THREE.MeshStandardMaterial({color: 0x333333});
-const crowdInstanced = new THREE.InstancedMesh(crowdGeo, crowdMat, crowdCount);
-const dummy = new THREE.Object3D();
-const crowdData = [];
-for (let i = 0; i < crowdCount; i++) {
-  let x, z;
-  if (i < 100) { x = -15 - Math.random()*10; z = -15 + (i/100)*30; }
-  else if (i < 200) { x = 15 + Math.random()*10; z = -15 + ((i-100)/100)*30; }
-  else { x = -15 + ((i-200)/100)*30; z = -15 - Math.random()*10; }
-  const y = Math.random() * 2;
-  dummy.position.set(x, y, z); dummy.updateMatrix();
-  crowdInstanced.setMatrixAt(i, dummy.matrix);
-  crowdInstanced.setColorAt(i, new THREE.Color().setHSL(Math.random(), 0.8, 0.5));
-  crowdData.push({baseY: y, phase: Math.random() * Math.PI * 2});
-}
-scene.add(crowdInstanced);
-
-// MODEL FIGHTER (MUKA & RAHANG)
-const textureLoader = new THREE.TextureLoader();
-const playerFaceTex = textureLoader.load('5B782A7C-39CB-47F2-B3B8-34D6B6A1B3A3.jpg'); 
-const botFaceTex = textureLoader.load('A7A93CAB-7AD7-4122-9ACA-707B76DFED7E.jpg'); 
-
-function createWrestler(colorHex, faceTexture) {
-  const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({color: colorHex, roughness: 0.6, metalness: 0.1});
-  const skinMat = new THREE.MeshStandardMaterial({color: 0xc68642, roughness: 0.7});
-  const faceMat = new THREE.MeshStandardMaterial({map: faceTexture, color: 0xffffff, roughness: 0.5});
-
-  // Kepala (Bulat sikit)
-  const headGeo = new THREE.SphereGeometry(0.45, 16, 16);
-  const head = new THREE.Mesh(headGeo, skinMat);
-  head.position.y = 5.2; group.add(head);
-
-  // Muka (Plane diletak kat depan kepala)
-  const faceGeo = new THREE.PlaneGeometry(0.7, 0.8);
-  const faceMesh = new THREE.Mesh(faceGeo, faceMat);
-  faceMesh.position.set(0, 5.2, 0.46); // Tampal kat depan
-  group.add(faceMesh);
-
-  // Rahang (Jaw) - Boleh buka tutup
-  const jawGeo = new THREE.BoxGeometry(0.6, 0.2, 0.4);
-  const jaw = new THREE.Mesh(jawGeo, skinMat);
-  jaw.position.set(0, 4.9, 0.2);
-  group.add(jaw);
-
-  // Badan
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2, 0.8), skinMat);
-  torso.position.y = 3.5; group.add(torso);
-  
-  const shorts = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.9), mat);
-  shorts.position.y = 2.2; group.add(shorts);
-
-  const chestL = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.2), skinMat);
-  chestL.position.set(-0.35, 4.1, 0.45); group.add(chestL);
-  const chestR = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.2), skinMat);
-  chestR.position.set(0.35, 4.1, 0.45); group.add(chestR);
-
-  // Tangan
-  const armGeo = new THREE.CylinderGeometry(0.25, 0.2, 2, 8);
-  armGeo.translate(0, -1, 0);
-  const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.35), skinMat);
-  shoulderL.position.set(-0.8, 4.3, 0); group.add(shoulderL);
-  const armL = new THREE.Mesh(armGeo, skinMat);
-  armL.position.set(-0.8, 4.2, 0); group.add(armL);
-  
-  const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.35), skinMat);
-  shoulderR.position.set(0.8, 4.3, 0); group.add(shoulderR);
-  const armR = new THREE.Mesh(armGeo, skinMat);
-  armR.position.set(0.8, 4.2, 0); group.add(armR);
-
-  // Kaki
-  const legGeo = new THREE.CylinderGeometry(0.3, 0.2, 2, 8);
-  legGeo.translate(0, -1, 0);
-  const legL = new THREE.Mesh(legGeo, skinMat);
-  legL.position.set(-0.4, 2.2, 0); group.add(legL);
-  const legR = new THREE.Mesh(legGeo, skinMat);
-  legR.position.set(0.4, 2.2, 0); group.add(legR);
-
-  group.userData = {
-    parts: { armL, armR, legL, legR, head, faceMesh, jaw, torso },
-    velocity: new THREE.Vector3(),
-    health: 100, maxHealth: 100,
-    stamina: 100, maxStamina: 100,
-    state: 'idle', stateTimer: 0,
-    isKnockedOut: false,
-    jawOpen: 0 // Untuk animasi mimik muka
-  };
-  return group;
-}
-
-const p1 = createWrestler(0x00ffff, playerFaceTex); 
-p1.position.set(0, 1.5, 6); p1.rotation.y = Math.PI; scene.add(p1);
-
-const p2 = createWrestler(0xff0055, botFaceTex);
-p2.position.set(0, 1.5, -6); p2.rotation.y = 0; scene.add(p2);
 
 /* ============================================================
-   KAWALAN & STATE GAME
+   SISTEM LUKA & DARAH (DYNAMIC CANVAS TEXTURE)
+   ============================================================ */
+const faceCanvasP1 = document.createElement('canvas');
+faceCanvasP1.width = 256; faceCanvasP1.height = 256;
+const faceCanvasP2 = document.createElement('canvas');
+faceCanvasP2.width = 256; faceCanvasP2.height = 256;
+
+const imgP1 = new Image(); imgP1.crossOrigin = "Anonymous";
+imgP1.src = '5B782A7C-39CB-47F2-B3B8-34D6B6A1B3A3.jpg';
+const imgP2 = new Image(); imgP2.crossOrigin = "Anonymous";
+imgP2.src = 'A7A93CAB-7AD7-4122-9ACA-707B76DFED7E.jpg';
+
+function updateFaceTexture(boxer, health, isP1) {
+  const canvas = isP1 ? faceCanvasP1 : faceCanvasP2;
+  const ctx = canvas.getContext('2d');
+  const img = isP1 ? imgP1 : imgP2;
+  const damage = 100 - health;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (img.complete && img.naturalHeight !== 0) {
+    // Scale image to fit canvas keeping aspect ratio
+    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+    const x = (canvas.width / 2) - (img.width / 2) * scale;
+    const y = (canvas.height / 2) - (img.height / 2) * scale;
+    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+  }
+
+  // Tambah Kesan Luka & Darah
+  if (damage > 25) {
+    // Lebam mata (Biru/Hitam)
+    ctx.fillStyle = 'rgba(40, 20, 80, 0.6)';
+    ctx.beginPath();
+    ctx.ellipse(canvas.width * 0.3, canvas.height * 0.4, 20, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  if (damage > 50) {
+    // Darah kat hidung / mulut
+    ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+    ctx.beginPath();
+    ctx.ellipse(canvas.width * 0.5, canvas.height * 0.65, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Titisan darah
+    ctx.fillRect(canvas.width * 0.48, canvas.height * 0.65, 4, 30);
+  }
+
+  if (damage > 75) {
+    // Lebam teruk
+    ctx.fillStyle = 'rgba(20, 10, 40, 0.8)';
+    ctx.beginPath();
+    ctx.ellipse(canvas.width * 0.7, canvas.height * 0.4, 25, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Darah lebih banyak
+    ctx.fillStyle = 'rgba(150, 0, 0, 0.9)';
+    ctx.beginPath();
+    ctx.arc(canvas.width * 0.4, canvas.height * 0.55, 8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillRect(canvas.width * 0.6, canvas.height * 0.3, 3, 50); // Darah dari dahi
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  boxer.userData.faceMesh.material.map = tex;
+  boxer.userData.faceMesh.material.needsUpdate = true;
+}
+
+// Panggil sekali awal untuk load gambar
+setTimeout(() => {
+  updateFaceTexture(p1, 100, true);
+  updateFaceTexture(p2, 100, false);
+}, 1000);
+
+function createBoxer(colorHex, isPlayer) {
+  const root = new THREE.Group();
+  const skinMat = new THREE.MeshStandardMaterial({color: 0xc68642, roughness: 0.7});
+  const gloveMat = new THREE.MeshStandardMaterial({color: colorHex, roughness: 0.4});
+  
+  // Guna CanvasTexture sebagai material muka
+  const faceMat = new THREE.MeshStandardMaterial({ 
+    map: new THREE.CanvasTexture(isPlayer ? faceCanvasP1 : faceCanvasP2), 
+    color: 0xffffff, roughness: 0.5 
+  });
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 0.6), skinMat);
+  torso.position.y = 3.8; root.add(torso);
+  
+  const shorts = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 0.7), gloveMat);
+  shorts.position.y = 2.8; root.add(shorts);
+
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 4.8, 0); root.add(headGroup);
+  
+  const headMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.7, 16), skinMat);
+  headMesh.rotation.x = Math.PI/2;
+  headGroup.add(headMesh);
+  
+  const faceMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), faceMat);
+  faceMesh.position.set(0, 0, 0.36); 
+  headGroup.add(faceMesh);
+
+  const armL_Group = new THREE.Group();
+  armL_Group.position.set(-0.7, 4.4, 0); root.add(armL_Group);
+  const upperArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1, 8), skinMat);
+  upperArmL.position.y = -0.5; armL_Group.add(upperArmL);
+  const forearmL_Group = new THREE.Group();
+  forearmL_Group.position.y = -1; armL_Group.add(forearmL_Group);
+  const forearmL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.8, 8), skinMat);
+  forearmL.position.y = -0.4; forearmL_Group.add(forearmL);
+  const gloveL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), gloveMat);
+  gloveL.position.y = -0.9; forearmL_Group.add(gloveL);
+
+  const armR_Group = new THREE.Group();
+  armR_Group.position.set(0.7, 4.4, 0); root.add(armR_Group);
+  const upperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1, 8), skinMat);
+  upperArmR.position.y = -0.5; armR_Group.add(upperArmR);
+  const forearmR_Group = new THREE.Group();
+  forearmR_Group.position.y = -1; armR_Group.add(forearmR_Group);
+  const forearmR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.8, 8), skinMat);
+  forearmR.position.y = -0.4; forearmR_Group.add(forearmR);
+  const gloveR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), gloveMat);
+  gloveR.position.y = -0.9; forearmR_Group.add(gloveR);
+
+  const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 1.8, 8), skinMat);
+  legL.position.set(-0.3, 1.8, 0); root.add(legL);
+  const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 1.8, 8), skinMat);
+  legR.position.set(0.3, 1.8, 0); root.add(legR);
+
+  root.userData = {
+    parts: { torso, headGroup, faceMesh, armL_Group, forearmL_Group, armR_Group, forearmR_Group, legL, legR, gloveR },
+    velocity: new THREE.Vector3(),
+    health: 100, maxHealth: 100,
+    stamina: 100,
+    state: 'idle', 
+    stateTimer: 0,
+    isKnockedOut: false,
+    hitConnection: false,
+    isPlayer: isPlayer
+  };
+  return root;
+}
+
+const p1 = createBoxer(0x00ffff, true); 
+p1.position.set(0, 1, 5); p1.rotation.y = Math.PI; scene.add(p1);
+
+const p2 = createBoxer(0xff0055, false);
+p2.position.set(0, 1, -5); p2.rotation.y = 0; scene.add(p2);
+
+/* ============================================================
+   KAWALAN & STATE
    ============================================================ */
 let gameMode = 'menu';
 let roundState = 'intro'; 
-let roundTimer = 4.0; 
+let roundTimer = 3.5; 
+const bloodOverlay = document.getElementById('bloodOverlay');
 
 const keys = { 
-  p1_forward:false, p1_back:false, p1_left:false, p1_right:false, p1_punch:false, p1_grapple:false,
-  p2_forward:false, p2_back:false, p2_left:false, p2_right:false, p2_punch:false, p2_grapple:false
+  p1_forward:false, p1_back:false, p1_left:false, p1_right:false, 
+  p1_jab:false, p1_hook:false, p1_uppercut:false, p1_block:false
 };
 
-// Input Keyboard
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if(k==='w') keys.p1_forward = true; if(k==='s') keys.p1_back = true;
   if(k==='a') keys.p1_left = true; if(k==='d') keys.p1_right = true;
-  if(k==='f') keys.p1_punch = true; if(k==='g') keys.p1_grapple = true;
-  
-  if(k==='arrowup') keys.p2_forward = true; if(k==='arrowdown') keys.p2_back = true;
-  if(k==='arrowleft') keys.p2_left = true; if(k==='arrowright') keys.p2_right = true;
-  if(k==='1') keys.p2_punch = true; if(k==='2') keys.p2_grapple = true;
+  if(k==='j') keys.p1_jab = true; if(k==='k') keys.p1_hook = true; 
+  if(k==='l') keys.p1_uppercut = true; if(k==='h') keys.p1_block = true;
 });
 addEventListener('keyup', e => {
   const k = e.key.toLowerCase();
   if(k==='w') keys.p1_forward = false; if(k==='s') keys.p1_back = false;
   if(k==='a') keys.p1_left = false; if(k==='d') keys.p1_right = false;
-  if(k==='f') keys.p1_punch = false; if(k==='g') keys.p1_grapple = false;
-  
-  if(k==='arrowup') keys.p2_forward = false; if(k==='arrowdown') keys.p2_back = false;
-  if(k==='arrowleft') keys.p2_left = false; if(k==='arrowright') keys.p2_right = false;
-  if(k==='1') keys.p2_punch = false; if(k==='2') keys.p2_grapple = false;
+  if(k==='j') keys.p1_jab = false; if(k==='k') keys.p1_hook = false; 
+  if(k==='l') keys.p1_uppercut = false; if(k==='h') keys.p1_block = false;
 });
 
-// Input Touch Buttons
 document.querySelectorAll('[data-k]').forEach(btn => {
   const k = btn.dataset.k;
   const on = e => { e.preventDefault(); keys[k] = true; btn.classList.add('active'); };
@@ -378,240 +408,220 @@ document.querySelectorAll('[data-k]').forEach(btn => {
   btn.addEventListener('mouseup', off);
 });
 
-// Input Drag Camera (Tengok Atas/Bawah)
-let isDragging = false, prevTouchX = 0, prevTouchY = 0;
-let camPitch = 0; // Atas/Bawah
-let camYaw = 0;   // Kiri/Kanan (tapi kita auto-lock kat musuh)
-
-const dragArea = document.getElementById('dragArea');
-
-dragArea.addEventListener('pointerdown', e => {
-  isDragging = true; prevTouchX = e.clientX; prevTouchY = e.clientY;
-});
-addEventListener('pointermove', e => {
-  if(!isDragging || gameMode === 'menu' || gameMode === 'over') return;
-  const dx = e.clientX - prevTouchX;
-  const dy = e.clientY - prevTouchY;
-  
-  // Sensitiviti
-  camPitch -= dy * 0.005;
-  camPitch = Math.max(-0.5, Math.min(0.5, camPitch)); // Had tengok atas/bawah
-  
-  // Kalau nak benarkan pandang kiri/kanan masa FPP, buka code bawah
-  // camYaw -= dx * 0.005; 
-  
-  prevTouchX = e.clientX; prevTouchY = e.clientY;
-});
-addEventListener('pointerup', () => isDragging = false);
-
 /* ============================================================
-   LOGIK AI & ANIMASI
+   LOGIK ANIMASI & TUMBUKAN
    ============================================================ */
-const arenaLimit = 8.5;
+const arenaLimit = 6.5;
 let hitStopTimer = 0;
-let botThinkTimer = 0;
-let botAction = 'approach'; 
 
-function updateWrestler(w, dt) {
-  const ud = w.userData;
+function updateBoxer(boxer, dt) {
+  const ud = boxer.userData;
+  const parts = ud.parts;
   
-  if (hitStopTimer > 0) { dt *= 0.1; }
+  if (hitStopTimer > 0) dt *= 0.1;
 
   if (ud.isKnockedOut) {
-    w.rotation.x += (Math.PI/2 - w.rotation.x) * dt * 5;
-    w.position.y += (0.5 - w.position.y) * dt * 5;
-    ud.parts.jaw.rotation.x = 0.5; // Mulut ternganga
-    ud.parts.jaw.position.y = 4.7;
+    boxer.rotation.x += (Math.PI/2 - boxer.rotation.x) * dt * 5;
+    boxer.position.y += (0.3 - boxer.position.y) * dt * 5;
     return;
   }
 
-  w.position.x = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.x));
-  w.position.z = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.z));
-  
-  if (ud.state === 'idle' && ud.stamina < ud.maxStamina) {
-    ud.stamina += 15 * dt; 
-  }
+  boxer.position.x = Math.max(-arenaLimit, Math.min(arenaLimit, boxer.position.x));
+  boxer.position.z = Math.max(-arenaLimit, Math.min(arenaLimit, boxer.position.z));
 
-  ud.velocity.y -= 30 * dt; w.position.y += ud.velocity.y * dt;
-  if (w.position.y <= 1.5) { w.position.y = 1.5; ud.velocity.y = 0; }
-  
-  if(ud.stateTimer > 0) { ud.stateTimer -= dt; if(ud.stateTimer <= 0) ud.state = 'idle'; }
-  
-  // Animasi Rahang (Mimik Muka)
-  if (ud.state === 'hurt') {
-    ud.jawOpen += (1 - ud.jawOpen) * dt * 10; // Buka mulut
-  } else {
-    ud.jawOpen += (0 - ud.jawOpen) * dt * 5; // Tutup mulut
-  }
-  ud.parts.jaw.position.y = 4.9 - (ud.jawOpen * 0.15);
-  ud.parts.jaw.rotation.x = ud.jawOpen * 0.3;
-
-  const parts = ud.parts;
-  const isTired = ud.stamina < 30;
-  const animSpeed = isTired ? 0.5 : 1.0;
-
-  if (ud.state === 'hurt' || ud.state === 'grappled') {
-    w.rotation.z = Math.sin(performance.now()*0.03) * 0.5;
-    w.rotation.x = Math.cos(performance.now()*0.04) * 0.5;
-    parts.armL.rotation.x = Math.sin(performance.now()*0.05) * 1;
-    parts.armR.rotation.x = -Math.sin(performance.now()*0.05) * 1;
-  } else {
-    w.rotation.z *= 0.8; w.rotation.x *= 0.8;
-    
-    if (ud.state === 'punch') {
-      parts.armR.rotation.x = -Math.PI/2 + Math.sin(performance.now() * 0.05) * 0.5;
-      parts.armL.rotation.x = 0.5;
-    } else if (ud.state === 'slam') {
-      parts.armR.rotation.x = -Math.PI; parts.armL.rotation.x = -Math.PI;
-    } else if (Math.abs(ud.velocity.x) > 0.5 || Math.abs(ud.velocity.z) > 0.5) {
-      const cycle = performance.now() * 0.015 * animSpeed;
-      parts.legL.rotation.x = Math.sin(cycle) * 0.8; parts.legR.rotation.x = -Math.sin(cycle) * 0.8;
-      parts.armL.rotation.x = -Math.sin(cycle) * 0.5; parts.armR.rotation.x = Math.sin(cycle) * 0.5;
-    } else {
-      const breath = Math.sin(performance.now() * 0.003) * 0.05;
-      parts.torso.position.y = 3.5 + breath;
-      parts.head.position.y = 5.2 + breath;
-      parts.faceMesh.position.y = 5.2 + breath;
-      
-      parts.armL.rotation.x *= 0.8; 
-      parts.armR.rotation.x *= 0.8;
-      parts.armL.rotation.x += 0.2;
-      parts.armR.rotation.x += 0.2;
-      parts.legL.rotation.x *= 0.8; parts.legR.rotation.x *= 0.8;
+  if(ud.stateTimer > 0) { 
+    ud.stateTimer -= dt; 
+    if(ud.stateTimer <= 0) {
+      ud.state = 'idle';
+      ud.hitConnection = false;
     }
   }
+
+  const lerpSpeed = 15 * dt;
   
-  const friction = ud.stamina < 30 ? 0.95 : 0.88;
-  ud.velocity.x *= friction; ud.velocity.z *= friction; 
-  w.position.x += ud.velocity.x * dt;
-  w.position.z += ud.velocity.z * dt;
+  if (ud.state === 'idle' || ud.state === 'walk') {
+    const breath = Math.sin(performance.now() * 0.005) * 0.05;
+    parts.torso.position.y = 3.8 + breath;
+    parts.headGroup.position.y = 4.8 + breath;
+    
+    parts.armR_Group.rotation.x = THREE.MathUtils.lerp(parts.armR_Group.rotation.x, -1.2, lerpSpeed);
+    parts.armR_Group.rotation.z = THREE.MathUtils.lerp(parts.armR_Group.rotation.z, 0.3, lerpSpeed);
+    parts.forearmR_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmR_Group.rotation.x, -1.5, lerpSpeed);
+    
+    parts.armL_Group.rotation.x = THREE.MathUtils.lerp(parts.armL_Group.rotation.x, -1.2, lerpSpeed);
+    parts.armL_Group.rotation.z = THREE.MathUtils.lerp(parts.armL_Group.rotation.z, -0.3, lerpSpeed);
+    parts.forearmL_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmL_Group.rotation.x, -1.5, lerpSpeed);
+    
+    if(Math.abs(ud.velocity.x) > 0.1 || Math.abs(ud.velocity.z) > 0.1) {
+      ud.state = 'walk';
+      const walkCycle = performance.now() * 0.01;
+      parts.legL.rotation.x = Math.sin(walkCycle) * 0.4;
+      parts.legR.rotation.x = -Math.sin(walkCycle) * 0.4;
+    } else {
+      ud.state = 'idle';
+      parts.legL.rotation.x = THREE.MathUtils.lerp(parts.legL.rotation.x, 0, lerpSpeed);
+      parts.legR.rotation.x = THREE.MathUtils.lerp(parts.legR.rotation.x, 0, lerpSpeed);
+    }
+  } 
+  else if (ud.state === 'jab') {
+    parts.armR_Group.rotation.x = THREE.MathUtils.lerp(parts.armR_Group.rotation.x, -Math.PI/2, lerpSpeed*2);
+    parts.armR_Group.rotation.z = THREE.MathUtils.lerp(parts.armR_Group.rotation.z, 0, lerpSpeed*2);
+    parts.forearmR_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmR_Group.rotation.x, 0, lerpSpeed*2);
+  }
+  else if (ud.state === 'hook') {
+    parts.armL_Group.rotation.x = THREE.MathUtils.lerp(parts.armL_Group.rotation.x, -Math.PI/2, lerpSpeed*2);
+    parts.armL_Group.rotation.z = THREE.MathUtils.lerp(parts.armL_Group.rotation.z, -1.5, lerpSpeed*2);
+    parts.forearmL_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmL_Group.rotation.x, 0, lerpSpeed*2);
+  }
+  else if (ud.state === 'uppercut') {
+    parts.armR_Group.rotation.x = THREE.MathUtils.lerp(parts.armR_Group.rotation.x, -0.5, lerpSpeed*2);
+    parts.armR_Group.rotation.z = THREE.MathUtils.lerp(parts.armR_Group.rotation.z, 0.8, lerpSpeed*2);
+    parts.forearmR_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmR_Group.rotation.x, -Math.PI, lerpSpeed*2);
+    parts.torso.rotation.x = THREE.MathUtils.lerp(parts.torso.rotation.x, -0.2, lerpSpeed*2);
+  }
+  else if (ud.state === 'block') {
+    parts.armR_Group.rotation.x = THREE.MathUtils.lerp(parts.armR_Group.rotation.x, -2, lerpSpeed*2);
+    parts.armR_Group.rotation.z = THREE.MathUtils.lerp(parts.armR_Group.rotation.z, 0.1, lerpSpeed*2);
+    parts.forearmR_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmR_Group.rotation.x, -2, lerpSpeed*2);
+    
+    parts.armL_Group.rotation.x = THREE.MathUtils.lerp(parts.armL_Group.rotation.x, -2, lerpSpeed*2);
+    parts.armL_Group.rotation.z = THREE.MathUtils.lerp(parts.armL_Group.rotation.z, -0.1, lerpSpeed*2);
+    parts.forearmL_Group.rotation.x = THREE.MathUtils.lerp(parts.forearmL_Group.rotation.x, -2, lerpSpeed*2);
+    parts.torso.rotation.x = THREE.MathUtils.lerp(parts.torso.rotation.x, 0.2, lerpSpeed*2);
+  }
+  else if (ud.state === 'hit') {
+    parts.torso.rotation.x = THREE.MathUtils.lerp(parts.torso.rotation.x, 0.3, lerpSpeed*3);
+    parts.headGroup.rotation.x = THREE.MathUtils.lerp(parts.headGroup.rotation.x, -0.4, lerpSpeed*3);
+    parts.armR_Group.rotation.x = THREE.MathUtils.lerp(parts.armR_Group.rotation.x, 0, lerpSpeed*3);
+    parts.armL_Group.rotation.x = THREE.MathUtils.lerp(parts.armL_Group.rotation.x, 0, lerpSpeed*3);
+  }
+
+  ud.velocity.x *= 0.85; 
+  ud.velocity.z *= 0.85; 
+  boxer.position.x += ud.velocity.x * dt;
+  boxer.position.z += ud.velocity.z * dt;
 }
 
-function handleP1Input(dt) {
+function checkPunchHit(attacker, defender, punchType) {
+  const ud = attacker.userData;
+  if (ud.hitConnection) return;
+
+  const dist = Math.hypot(attacker.position.x - defender.position.x, attacker.position.z - defender.position.z);
+  let range = 2.2; let dmg = 0; let isHeavy = false;
+
+  if (punchType === 'jab') { range = 2.5; dmg = 5; }
+  if (punchType === 'hook') { range = 2.0; dmg = 10; isHeavy = true; }
+  if (punchType === 'uppercut') { range = 1.8; dmg = 15; isHeavy = true; }
+
+  if (dist < range) {
+    ud.hitConnection = true;
+    const defUd = defender.userData;
+    
+    if (defUd.state === 'block') {
+      dmg = dmg * 0.1; 
+      defUd.stamina -= 5;
+      playPunchSound(false);
+      showComboText("BLOCKED!");
+    } else {
+      defUd.health -= dmg;
+      defUd.stamina -= 10;
+      defUd.state = 'hit';
+      defUd.stateTimer = 0.4;
+      
+      const dir = new THREE.Vector3().subVectors(defender.position, attacker.position).normalize();
+      defUd.velocity.x = dir.x * 5;
+      defUd.velocity.z = dir.z * 5;
+      
+      hitStopTimer = 0.08; 
+      camera.position.x += (Math.random()-0.5) * 0.5; 
+      
+      playPunchSound(isHeavy);
+      showComboText(punchType.toUpperCase() + "!");
+      
+      // Kesan Darah (Percikan)
+      createBloodSplatter(defender.position.clone().setY(4.5), isHeavy);
+      
+      // Update Muka (Luka)
+      updateFaceTexture(defender, defUd.health, defUd.isPlayer);
+
+      // Kalau player kena tumbuk, bagi skrin merah
+      if (defUd.isPlayer) {
+        bloodOverlay.classList.add('show');
+        setTimeout(() => bloodOverlay.classList.remove('show'), 200);
+      }
+    }
+    updateHealthUI();
+  }
+}
+
+function handlePlayerInput(dt) {
   const ud = p1.userData;
-  if (ud.state === 'hurt' || ud.isKnockedOut || roundState === 'intro' || gameMode === 'over') return;
-  
-  const speed = ud.stamina < 30 ? 3 : 6;
-  const accel = 20;
-  
-  // Pergerakan relatif kepada arah pandang (kamera)
-  const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-  forward.y = 0; forward.normalize();
-  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-  
-  if (keys.p1_forward) { ud.velocity.x += forward.x * accel * dt; ud.velocity.z += forward.z * accel * dt; }
-  if (keys.p1_back) { ud.velocity.x -= forward.x * accel * dt; ud.velocity.z -= forward.z * accel * dt; }
-  if (keys.p1_left) { ud.velocity.x -= right.x * accel * dt; ud.velocity.z -= right.z * accel * dt; }
-  if (keys.p1_right) { ud.velocity.x += right.x * accel * dt; ud.velocity.z += right.z * accel * dt; }
-  
-  const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
-  
-  if (keys.p1_punch && ud.stateTimer <= 0 && dist < 3.5 && ud.stamina > 10) {
-    ud.state = 'punch'; ud.stateTimer = 0.4; ud.stamina -= 15;
-    p2.userData.health -= (ud.stamina < 30 ? 4 : 8);
-    p2.userData.state = 'hurt'; p2.userData.stateTimer = 0.3;
-    p2.userData.velocity.z = 6; 
-    hitStopTimer = 0.1; 
-    updateHealthUI(); playPunchSound(); showComboText("TUMBUK!"); keys.p1_punch = false;
-  }
-  
-  if (keys.p1_grapple && ud.stateTimer <= 0 && dist < 2.5 && ud.stamina > 30) {
-    ud.state = 'slam'; ud.stateTimer = 1.2; ud.stamina -= 40;
-    p2.userData.state = 'grappled'; p2.userData.stateTimer = 1.2;
-    p2.position.x = p1.position.x; p2.position.z = p1.position.z; p2.position.y = 4.5;
-    setTimeout(() => {
-      if(!p2.userData.isKnockedOut){
-        p2.position.y = 1.5; p2.userData.health -= 30; p2.userData.velocity.y = -10;
-        hitStopTimer = 0.2; 
-      }
-      updateHealthUI(); playPunchSound(); showComboText("BANTING!"); createHitEffect(p2.position, 0xffcc00);
-    }, 800); keys.p1_grapple = false;
+  if (ud.state === 'hit' || ud.isKnockedOut || roundState === 'intro' || gameMode === 'over') return;
+
+  const accel = 15;
+  if (keys.p1_forward) ud.velocity.z -= accel * dt;
+  if (keys.p1_back) ud.velocity.z += accel * dt;
+  if (keys.p1_left) ud.velocity.x -= accel * dt;
+  if (keys.p1_right) ud.velocity.x += accel * dt;
+
+  if (ud.state === 'jab' || ud.state === 'hook' || ud.state === 'uppercut' || ud.state === 'block') return;
+
+  if (keys.p1_block) {
+    ud.state = 'block';
+  } else if (keys.p1_jab && ud.stamina > 10) {
+    ud.state = 'jab'; ud.stateTimer = 0.3; ud.stamina -= 10; keys.p1_jab = false;
+    setTimeout(() => checkPunchHit(p1, p2, 'jab'), 150);
+  } else if (keys.p1_hook && ud.stamina > 20) {
+    ud.state = 'hook'; ud.stateTimer = 0.4; ud.stamina -= 20; keys.p1_hook = false;
+    setTimeout(() => checkPunchHit(p1, p2, 'hook'), 200);
+  } else if (keys.p1_uppercut && ud.stamina > 30) {
+    ud.state = 'uppercut'; ud.stateTimer = 0.5; ud.stamina -= 30; keys.p1_uppercut = false;
+    setTimeout(() => checkPunchHit(p1, p2, 'uppercut'), 250);
   }
 }
 
-function handleP2Input(dt) {
+function handleBotAI(dt) {
   const ud = p2.userData;
-  if (ud.state === 'hurt' || ud.isKnockedOut || roundState === 'intro' || gameMode === 'over') return;
-  
-  const accel = 20;
-  if (keys.p2_forward) ud.velocity.z += accel * dt;
-  if (keys.p2_back) ud.velocity.z -= accel * dt;
-  if (keys.p2_left) ud.velocity.x -= accel * dt;
-  if (keys.p2_right) ud.velocity.x += accel * dt;
-  
+  if (ud.state === 'hit' || ud.isKnockedOut || roundState === 'intro' || gameMode === 'over') return;
+
   const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
   
-  if (keys.p2_punch && ud.stateTimer <= 0 && dist < 3.5 && ud.stamina > 10) {
-    ud.state = 'punch'; ud.stateTimer = 0.4; ud.stamina -= 15;
-    p1.userData.health -= (ud.stamina < 30 ? 4 : 8);
-    p1.userData.state = 'hurt'; p1.userData.stateTimer = 0.3;
-    p1.userData.velocity.z = -6;
-    hitStopTimer = 0.1; 
-    updateHealthUI(); playPunchSound(); showComboText("P2 TUMBUK!"); keys.p2_punch = false;
+  if (dist > 2.5 && ud.state !== 'jab' && ud.state !== 'hook' && ud.state !== 'uppercut') {
+    ud.state = 'walk';
+    const dir = new THREE.Vector3().subVectors(p1.position, p2.position).normalize();
+    ud.velocity.x = dir.x * 4;
+    ud.velocity.z = dir.z * 4;
+  } else {
+    ud.velocity.x = 0; ud.velocity.z = 0;
   }
-  
-  if (keys.p2_grapple && ud.stateTimer <= 0 && dist < 2.5 && ud.stamina > 30) {
-    ud.state = 'slam'; ud.stateTimer = 1.2; ud.stamina -= 40;
-    p1.userData.state = 'grappled'; p1.userData.stateTimer = 1.2;
-    p1.position.x = p2.position.x; p1.position.z = p2.position.z; p1.position.y = 4.5;
-    setTimeout(() => {
-      if(!p1.userData.isKnockedOut){
-        p1.position.y = 1.5; p1.userData.health -= 30; p1.userData.velocity.y = -10;
-        hitStopTimer = 0.2; 
+
+  if (ud.state !== 'jab' && ud.state !== 'hook' && ud.state !== 'uppercut' && ud.state !== 'hit') {
+    if (Math.random() < 0.05) {
+      const r = Math.random();
+      if (dist < 3) {
+        if (r < 0.4) {
+          ud.state = 'block';
+          setTimeout(() => { if(ud.state === 'block') ud.state = 'idle'; }, 800);
+        } else if (r < 0.7) {
+          ud.state = 'jab'; ud.stateTimer = 0.3; setTimeout(() => checkPunchHit(p2, p1, 'jab'), 150);
+        } else {
+          ud.state = 'hook'; ud.stateTimer = 0.4; setTimeout(() => checkPunchHit(p2, p1, 'hook'), 200);
+        }
       }
-      updateHealthUI(); playPunchSound(); showComboText("P2 BANTING!"); createHitEffect(p1.position, 0x00ffff);
-    }, 800); keys.p2_grapple = false;
-  }
-}
-
-function handleBotAI(bot, target, dt) {
-  const ud = bot.userData;
-  if (ud.state === 'hurt' || ud.isKnockedOut || roundState === 'intro' || gameMode === 'over') return;
-  
-  const dist = Math.hypot(target.position.x - bot.position.x, target.position.z - bot.position.z);
-  
-  if (botThinkTimer > 0) botThinkTimer -= dt;
-  
-  if (botThinkTimer <= 0) {
-    if (dist > 4) botAction = 'approach'; 
-    else if (dist < 2.5) botAction = Math.random() > 0.5 ? 'attack' : 'retreat'; 
-    else botAction = Math.random() > 0.3 ? 'strafe' : 'approach'; 
-    botThinkTimer = 0.5 + Math.random() * 0.8; 
-  }
-
-  if (ud.stamina < 30) {
-    if (dist < 4) { ud.velocity.z = (target.position.z > bot.position.z ? -2 : 2); }
-    return;
-  }
-
-  if (botAction === 'approach') {
-    ud.velocity.x = (target.position.x > bot.position.x ? 1 : -1) * 4;
-    ud.velocity.z = (target.position.z > bot.position.z ? 1 : -1) * 4;
-  } else if (botAction === 'retreat') {
-    ud.velocity.x = (target.position.x > bot.position.x ? -1 : 1) * 3;
-    ud.velocity.z = (target.position.z > bot.position.z ? -1 : 1) * 3;
-  } else if (botAction === 'strafe') {
-    ud.velocity.x = (target.position.z > bot.position.z ? 1 : -1) * 3; 
-  } else if (botAction === 'attack') {
-    if (dist < 3.5 && ud.stateTimer <= 0 && Math.random() < 0.3) { 
-      ud.state = 'punch'; ud.stateTimer = 0.4; ud.stamina -= 15;
-      target.userData.health -= 8;
-      target.userData.state = 'hurt'; target.userData.stateTimer = 0.3;
-      target.userData.velocity.z = (target.position.z > bot.position.z ? 1 : -1) * 6;
-      hitStopTimer = 0.1; botThinkTimer = 1.0; 
-      updateHealthUI(); playPunchSound();
     }
   }
 }
 
 /* ============================================================
-   UI & GAME LOOP
+   PARTIKEL DARAH & UI
    ============================================================ */
 const particles = [];
-function createHitEffect(pos, color) {
-  for(let i=0; i<15; i++) {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), new THREE.MeshBasicMaterial({color}));
-    p.position.copy(pos).add(new THREE.Vector3(0, 2, 0));
+function createBloodSplatter(pos, isHeavy) {
+  const count = isHeavy ? 20 : 8;
+  for(let i=0; i<count; i++) {
+    // Guna warna merah darah
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), new THREE.MeshBasicMaterial({color: 0xcc0000}));
+    p.position.copy(pos);
     const vel = new THREE.Vector3((Math.random()-0.5)*15, Math.random()*15, (Math.random()-0.5)*15);
     p.userData = { vel, life: 0.6 }; scene.add(p); particles.push(p);
   }
@@ -628,18 +638,15 @@ const p1Fill = document.getElementById('p1-fill'); const p2Fill = document.getEl
 const p1Stamina = document.getElementById('p1-stamina'); const p2Stamina = document.getElementById('p2-stamina');
 const comboTxt = document.getElementById('comboText');
 const roundTxt = document.getElementById('roundText');
-const crosshair = document.getElementById('crosshair');
-const dragAreaEl = document.getElementById('dragArea');
 
 function updateHealthUI() {
   p1Fill.style.width = Math.max(0, p1.userData.health) + '%';
   p2Fill.style.width = Math.max(0, p2.userData.health) + '%';
   p1Stamina.style.width = Math.max(0, p1.userData.stamina) + '%';
   p2Stamina.style.width = Math.max(0, p2.userData.stamina) + '%';
-  p1Stamina.style.background = p1.userData.stamina < 30 ? '#ff4444' : '#ffcc00';
-  p2Stamina.style.background = p2.userData.stamina < 30 ? '#ff4444' : '#ffcc00';
 }
 function showComboText(text) {
+  if(!comboTxt) return;
   comboTxt.textContent = text; comboTxt.classList.add('show');
   setTimeout(() => comboTxt.classList.remove('show'), 800);
 }
@@ -653,8 +660,7 @@ function checkGameOver() {
   
   if(p1.userData.health <= 0 || p2.userData.health <= 0) {
     gameMode = 'over';
-    const pWins = p2.userData.health <= 0;
-    showRoundText(pWins ? "YOU WIN!" : "YOU LOSE!");
+    showRoundText("K.O!");
     playBellSound();
     
     p1.userData.isKnockedOut = true;
@@ -664,14 +670,16 @@ function checkGameOver() {
       roundTxt.classList.remove('show');
       p1.userData.health = 100; p2.userData.health = 100;
       p1.userData.stamina = 100; p2.userData.stamina = 100;
-      p1.position.set(0, 1.5, 6); p2.position.set(0, 1.5, -6);
+      p1.position.set(0, 1, 5); p2.position.set(0, 1, -5);
       p1.rotation.set(0, Math.PI, 0); p2.rotation.set(0, 0, 0);
       p1.userData.velocity.set(0,0,0); p2.userData.velocity.set(0,0,0);
       p1.userData.state = 'idle'; p2.userData.state = 'idle';
-      p1.userData.stateTimer = 0; p2.userData.stateTimer = 0;
       p1.userData.isKnockedOut = false; p2.userData.isKnockedOut = false;
       
-      camPitch = 0;
+      // Reset Muka & Darah
+      updateFaceTexture(p1, 100, true);
+      updateFaceTexture(p2, 100, false);
+      
       roundState = 'intro'; roundTimer = 3.5;
       showRoundText("ROUND 1");
       setTimeout(() => { showRoundText("FIGHT!"); playBellSound(); roundState = 'fighting'; setTimeout(()=>roundTxt.classList.remove('show'), 1000); }, 2500);
@@ -697,61 +705,35 @@ function animate() {
     }
   }
 
-  if(gameMode === 'p1') {
-    // KAMERA FPP PEMAIN 1
-    p1.visible = false; // Sembunyikan seluruh badan player
+  if(gameMode === 'p1' || gameMode === 'p2') {
+    const p1Pos = p1.position;
+    const p2Pos = p2.position;
+    const camTarget = new THREE.Vector3(p1Pos.x, p1Pos.y + 3, p1Pos.z + 6);
     
-    // Kira arah pandang ke arah P2
-    const lookAtPos = new THREE.Vector3(p2.position.x, p2.position.y + 3.8, p2.position.z);
-    camera.position.set(p1.position.x, p1.position.y + 4.2, p1.position.z);
-    camera.lookAt(lookAtPos);
-    
-    // Tambah pitch (tengok atas/bawah)
-    camera.rotateX(camPitch);
-    
-    handleP1Input(dt); handleBotAI(p2, p1, dt);
-    
-  } else if (gameMode === 'p2') {
-    // KAMERA FPP PEMAIN 2
-    p2.visible = false;
-    
-    const lookAtPos = new THREE.Vector3(p1.position.x, p1.position.y + 3.8, p1.position.z);
-    camera.position.set(p2.position.x, p2.position.y + 4.2, p2.position.z);
-    camera.lookAt(lookAtPos);
-    
-    camera.rotateX(camPitch);
-    
-    handleP2Input(dt); handleBotAI(p1, p2, dt);
-    
+    camera.position.lerp(camTarget, dt * 5);
+    camera.lookAt(p2Pos.x, p2Pos.y + 3.5, p2Pos.z);
+
+    p1.visible = true; p2.visible = true; 
+    handlePlayerInput(dt); handleBotAI(dt);
   } else if (gameMode === 'local') {
     p1.visible = true; p2.visible = true;
     const midX = (p1.position.x + p2.position.x) / 2;
-    const midZ = (p1.position.z + p2.position.z) / 2;
-    const dist = Math.hypot(p1.position.x - p2.position.x, p1.position.z - p2.position.z);
-    
-    const targetCamZ = midZ + 14 + dist * 0.3;
+    const targetCamZ = (p1.position.z + p2.position.z) / 2 + 10;
     camera.position.x += (midX - camera.position.x) * dt * 3;
     camera.position.z += (targetCamZ - camera.position.z) * dt * 3;
-    camera.position.y = 6;
-    camera.lookAt(midX, 4, midZ);
+    camera.position.y = 5;
+    camera.lookAt(midX, 3, (p1.position.z + p2.position.z) / 2);
     
-    handleP1Input(dt); handleP2Input(dt);
+    handlePlayerInput(dt); 
   }
   
   if (gameMode !== 'menu' && gameMode !== 'over') {
-    updateWrestler(p1, dt); updateWrestler(p2, dt);
+    updateBoxer(p1, dt); updateBoxer(p2, dt);
     updateHealthUI();
   }
   
   checkGameOver();
   updateParticles(dt);
-  
-  const time = now * 0.005;
-  for(let i=0; i<crowdCount; i++) {
-    const data = crowdData[i]; dummy.position.y = data.baseY + Math.abs(Math.sin(time + data.phase)) * 0.5;
-    dummy.updateMatrix(); crowdInstanced.setMatrixAt(i, dummy.matrix);
-  }
-  crowdInstanced.instanceMatrix.needsUpdate = true;
 
   composer.render();
 }
@@ -768,23 +750,18 @@ function startGame(mode) {
   document.getElementById('startScreen').classList.add('hide');
   document.getElementById('controls').style.display = 'block';
   
-  if(mode === 'p1' || mode === 'p2') {
-    crosshair.style.display = 'block';
-    dragAreaEl.style.display = 'block'; // Enable drag to look
-  } else {
-    crosshair.style.display = 'none';
-    dragAreaEl.style.display = 'none';
-  }
-
-  p1.position.set(0, 1.5, 6); p1.rotation.set(0, Math.PI, 0);
-  p2.position.set(0, 1.5, -6); p2.rotation.set(0, 0, 0);
+  p1.position.set(0, 1, 5); p1.rotation.set(0, Math.PI, 0);
+  p2.position.set(0, 1, -5); p2.rotation.set(0, 0, 0);
   p1.userData.health = 100; p2.userData.health = 100;
   p1.userData.stamina = 100; p2.userData.stamina = 100;
   p1.userData.isKnockedOut = false; p2.userData.isKnockedOut = false;
   p1.userData.state = 'idle'; p2.userData.state = 'idle';
+  
+  updateFaceTexture(p1, 100, true);
+  updateFaceTexture(p2, 100, false);
+  
   updateHealthUI();
 
-  camPitch = 0;
   roundState = 'intro'; roundTimer = 3.5;
   showRoundText("ROUND 1");
   setTimeout(() => { 
@@ -796,28 +773,22 @@ function startGame(mode) {
 
   if(mode === 'p1') {
     document.getElementById('p1-controls').style.display = 'block';
-    document.getElementById('p2-controls').style.display = 'none';
-    document.querySelector('#p1-controls .up').style.display = 'flex';
-    document.querySelector('#p1-controls .down').style.display = 'flex';
-  } else if(mode === 'p2') {
-    document.getElementById('p1-controls').style.display = 'none';
     document.getElementById('p2-controls').style.display = 'block';
-    document.querySelector('#p2-controls .up').style.display = 'flex';
-    document.querySelector('#p2-controls .down').style.display = 'flex';
-  } else {
+  } else if(mode === 'local') {
     document.getElementById('p1-controls').style.display = 'block';
-    document.getElementById('p2-controls').style.display = 'block';
-    document.querySelector('#p1-controls .up').style.display = 'none';
-    document.querySelector('#p1-controls .down').style.display = 'none';
-    document.querySelector('#p2-controls .up').style.display = 'none';
-    document.querySelector('#p2-controls .down').style.display = 'none';
+    document.getElementById('p2-controls').style.display = 'none';
   }
   last = performance.now();
 }
 
 document.getElementById('btnP1').addEventListener('click', () => startGame('p1'));
-document.getElementById('btnP2').addEventListener('click', () => startGame('p2'));
 document.getElementById('btn2P').addEventListener('click', () => startGame('local'));
+
+// Preload gambar dan muka
+setTimeout(() => {
+  updateFaceTexture(p1, 100, true);
+  updateFaceTexture(p2, 100, false);
+}, 1500);
 
 updateHealthUI(); animate();
 </script>
