@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DRIVE SIM 3D</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none}
+  canvas{display:block}
+
+  /* ---- Vignette kokpit ---- */
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
+    background:radial-gradient(ellipse 78% 70% at 50% 58%,transparent 42%,rgba(0,0,0,.62) 100%)}
+
+  /* ---- HUD ---- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+
+  .speedo{position:absolute;right:22px;bottom:22px;text-align:right;
+    color:#eafff7;text-shadow:0 2px 14px rgba(0,0,0,.8)}
+  .spd-val{font-variant-numeric:tabular-nums;font-weight:800;line-height:.9;
+    font-size:clamp(38px,9vw,64px);letter-spacing:-2px}
+  .spd-val small{font-size:.28em;font-weight:600;letter-spacing:2px;opacity:.7;margin-left:6px}
+  .bar{margin-top:10px;width:clamp(130px,32vw,210px);height:7px;border-radius:6px;
+    background:rgba(255,255,255,.14);overflow:hidden;margin-left:auto;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+  .bar i{display:block;height:100%;width:0%;border-radius:6px;
+    background:linear-gradient(90deg,#2ee6a8,#f5d442 62%,#ff4d4d);
+    transition:width .08s linear}
+  .gear{margin-top:8px;font-size:12px;letter-spacing:3px;opacity:.65;font-weight:600}
+  .gear b{color:#2ee6a8;opacity:1;font-size:15px}
+
+  .brand{position:absolute;left:22px;top:20px;color:#fff;opacity:.55;
+    font-size:12px;letter-spacing:4px;font-weight:700;text-shadow:0 2px 10px #000}
+  .brand span{color:#2ee6a8}
+
+  /* ---- Butang sentuh ---- */
+  .touch{position:absolute;inset:auto 0 0 0;height:190px;display:none;
+    justify-content:space-between;align-items:flex-end;padding:0 18px 22px;pointer-events:none}
+  .touch .side{display:flex;gap:14px;pointer-events:auto}
+  .touch button{width:74px;height:74px;border-radius:50%;border:2px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.09);color:#fff;font-size:13px;font-weight:800;
+    letter-spacing:1px;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center}
+  .touch button.active{background:rgba(46,230,168,.4);border-color:#2ee6a8;transform:scale(.94)}
+  .touch button.gas{width:84px;height:84px;border-color:rgba(46,230,168,.5)}
+  @media (hover:none) and (pointer:coarse){ .touch{display:flex} }
+
+  /* ---- Skrin mula ---- */
+  #start{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 40%,#0e2a33,#04080b 75%);
+    transition:opacity .45s ease,visibility .45s}
+  #start.hide{opacity:0;visibility:hidden}
+  .card{width:min(90vw,400px);padding:34px 28px;border-radius:22px;text-align:center;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 30px 80px rgba(0,0,0,.6);color:#fff;backdrop-filter:blur(10px)}
+  .card h1{font-size:34px;letter-spacing:5px;font-weight:900;line-height:1}
+  .card h1 span{color:#2ee6a8}
+  .card p{margin-top:10px;font-size:13px;opacity:.55;letter-spacing:.5px}
+  .keys{margin:22px 0 24px;display:flex;flex-direction:column;gap:9px;font-size:13px}
+  .keys div{display:flex;justify-content:space-between;opacity:.8}
+  .keys b{background:rgba(255,255,255,.1);padding:3px 9px;border-radius:6px;
+    font-size:11px;letter-spacing:1px;font-weight:700}
+  #startBtn{width:100%;padding:16px;border:0;border-radius:14px;cursor:pointer;
+    background:linear-gradient(135deg,#2ee6a8,#12b98a);color:#03211a;
+    font-size:15px;font-weight:900;letter-spacing:2px;
+    box-shadow:0 12px 30px rgba(46,230,168,.28);transition:transform .12s}
+  #startBtn:active{transform:scale(.97)}
+  #sound{position:absolute;right:18px;top:18px;pointer-events:auto;z-index:12;
+    width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.07);color:#fff;font-size:16px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+  #sound.show{display:flex}
+</style>
+</head>
+<body>
+
+<div id="vignette"></div>
+
+<div id="hud">
+  <div class="brand">DRIVE<span>SIM</span></div>
+  <div class="speedo">
+    <div class="spd-val"><span id="spdNum">0</span><small>KM/H</small></div>
+    <div class="bar"><i id="spdBar"></i></div>
+    <div class="gear">GEAR <b id="gearNum">N</b></div>
+  </div>
+</div>
+
+<button id="sound">🔊</button>
+
+<div class="touch">
+  <div class="side">
+    <button data-key="left">◀</button>
+    <button data-key="right">▶</button>
+  </div>
+  <div class="side">
+    <button data-key="down">BREK</button>
+    <button data-key="up" class="gas">GAS</button>
+  </div>
+</div>
+
+<div id="start">
+  <div class="card">
+    <h1>DRIVE<span>SIM</span></h1>
+    <p>Simulasi memandu pandangan pertama</p>
+    <div class="keys">
+      <div><span>Pecut</span><b>W / ↑</b></div>
+      <div><span>Brek</span><b>S / ↓</b></div>
+      <div><span>Stereng</span><b>A D / ← →</b></div>
+    </div>
+    <button id="startBtn">MULA MEMANDU</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+/* =====================================================================
+   RENDERER / SCENE / CAMERA
+   ===================================================================== */
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+const SKY = 0x9dc4e8;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(SKY);
+scene.fog = new THREE.Fog(SKY, 90, 300);
+
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.05, 900);
+camera.rotation.order = 'YXZ';
+scene.add(camera);            // WAJIB: supaya anak-anak camera dirender
+
+/* =====================================================================
+   CAHAYA
+   ===================================================================== */
+scene.add(new THREE.HemisphereLight(0xcfe4ff, 0x3d5a34, 1.15));
+const sun = new THREE.DirectionalLight(0xfff3dd, 1.9);
+sun.position.set(60, 110, 40);
+scene.add(sun);
+
+/* =====================================================================
+   TETAPAN DUNIA
+   ===================================================================== */
+const ROAD_W = 14;
+const WRAP   = 640;
+const MAX_SPEED = 58;          // m/s  (~209 km/h)
+
+const CAR = { x:0, z:0, heading:0, speed:0 };
+let steer = 0;                 // -1 .. 1 (dilajurkan)
+
+/* =====================================================================
+   JALAN
+   ===================================================================== */
+const roadGroup = new THREE.Group();
+scene.add(roadGroup);
+
+const roadMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(ROAD_W, 800),
+  new THREE.MeshStandardMaterial({color:0x3b3b42, roughness:0.96, metalness:0.02})
+);
+roadMesh.rotation.x = -Math.PI/2;
+roadGroup.add(roadMesh);
+
+// garisan tepi
+const edgeMat = new THREE.MeshBasicMaterial({color:0xe8e8dc});
+for (const s of [-1,1]) {
+  const e = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 800), edgeMat);
+  e.rotation.x = -Math.PI/2;
+  e.position.set(s*(ROAD_W/2 - 0.45), 0.011, 0);
+  roadGroup.add(e);
+}
+
+// rumput
+const grass = new THREE.Mesh(
+  new THREE.PlaneGeometry(1400, 1400),
+  new THREE.MeshStandardMaterial({color:0x4f7a3d, roughness:1})
+);
+grass.rotation.x = -Math.PI/2;
+grass.position.y = -0.03;
+scene.add(grass);
+
+/* ---- garis tengah putus-putus ---- */
+const dashGeo = new THREE.PlaneGeometry(0.3, 4.5);
+const dashMat = new THREE.MeshBasicMaterial({color:0xf2f2e2});
+const dashes = [];
+for (let i = 0; i < 64; i++) {
+  const d = new THREE.Mesh(dashGeo, dashMat);
+  d.rotation.x = -Math.PI/2;
+  d.position.set(0, 0.012, 20 - i*10);
+  scene.add(d);
+  dashes.push(d);
+}
+
+/* =====================================================================
+   POKOK
+   ===================================================================== */
+const trunkMat = new THREE.MeshLambertMaterial({color:0x6b4a2f});
+const leafMats = [
+  new THREE.MeshLambertMaterial({color:0x2f7a3a}),
+  new THREE.MeshLambertMaterial({color:0x3d8f45}),
+  new THREE.MeshLambertMaterial({color:0x276b33})
+];
+
+function makeTree() {
+  const g = new THREE.Group();
+  const h = 1.6 + Math.random()*1.8;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.24, h, 5), trunkMat);
+  trunk.position.y = h/2;
+  g.add(trunk);
+  const layers = 2;
+  for (let i = 0; i < layers; i++) {
+    const c = new THREE.Mesh(
+      new THREE.ConeGeometry(1.5 - i*0.45, 2.6 + Math.random()*0.8, 6),
+      leafMats[(Math.random()*leafMats.length)|0]
+    );
+    c.position.y = h + 1.1 + i*1.5;
+    g.add(c);
+  }
+  return g;
+}
+
+const trees = [];
+for (let i = 0; i < 50; i++) {
+  const t = makeTree();
+  const side = (i % 2) ? 1 : -1;
+  t.position.set(side * (ROAD_W/2 + 3 + Math.random()*9), 0, 20 - i*13);
+  t.rotation.y = Math.random() * Math.PI * 2;
+  scene.add(t);
+  trees.push({ obj:t, side });
+}
+
+/* =====================================================================
+   BANGUNAN (dengan tekstur tingkap)
+   ===================================================================== */
+function windowTexture() {
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = '#69737f'; g.fillRect(0,0,64,128);
+  for (let y = 6; y < 124; y += 13) {
+    for (let x = 5; x < 62; x += 13) {
+      g.fillStyle = Math.random() > 0.4 ? '#cfe4ff' : '#39414c';
+      g.fillRect(x, y, 8, 8);
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const winTex = windowTexture();
+
+const buildings = [];
+const bColors = [0x8b8f96, 0xa39383, 0x7f8b99, 0x9a8f86, 0x6f7a86, 0xb0a79b];
+for (let i = 0; i < 16; i++) {
+  const w = 5 + Math.random()*6;
+  const h = 7 + Math.random()*22;
+  const d = 5 + Math.random()*6;
+  const tex = winTex.clone();
+  tex.needsUpdate = true;
+  tex.repeat.set(Math.max(1, w/3), Math.max(1, h/3.4));
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshLambertMaterial({ color: bColors[(Math.random()*bColors.length)|0], map: tex })
+  );
+  m.position.y = h/2;
+  const side = (i % 2) ? 1 : -1;
+  m.position.x = side * (24 + Math.random()*26);
+  m.position.z = 10 - i*40;
+  m.rotation.y = Math.random() * 0.6;
+  scene.add(m);
+  buildings.push({ obj:m, side });
+}
+
+/* =====================================================================
+   KOKPIT — STERENG + TANGAN
+   ===================================================================== */
+const cockpit = new THREE.Group();
+camera.add(cockpit);
+
+// papan pemuka
+const dashMat = new THREE.MeshStandardMaterial({color:0x191b20, roughness:0.95});
+const dashboard = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.34, 0.6), dashMat);
+dashboard.position.set(0, -0.44, -0.66);
+cockpit.add(dashboard);
+
+// kepuk stereng
+const wheelTilt = new THREE.Group();
+wheelTilt.position.set(0, -0.295, -0.5);
+wheelTilt.rotation.x = -0.42;
+cockpit.add(wheelTilt);
+
+const wheelSpin = new THREE.Group();
+wheelTilt.add(wheelSpin);
+
+const R = 0.172;                                  // jejari stereng
+const wheelMat = new THREE.MeshStandardMaterial({color:0x14161a, roughness:0.62, metalness:0.15});
+const rimMat   = new THREE.MeshStandardMaterial({color:0x2a2f38, roughness:0.5, metalness:0.35});
+
+// rim
+const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.023, 10, 52), wheelMat);
+wheelSpin.add(rim);
+
+// 3 jejari
+const spokeGeo = new THREE.BoxGeometry(R - 0.02, 0.036, 0.03);
+const spokeL = new THREE.Mesh(spokeGeo, rimMat); spokeL.position.x = -(R-0.02)/2; wheelSpin.add(spokeL);
+const spokeR = new THREE.Mesh(spokeGeo, rimMat); spokeR.position.x =  (R-0.02)/2; wheelSpin.add(spokeR);
+const spokeD = new THREE.Mesh(new THREE.BoxGeometry(0.036, R-0.02, 0.03), rimMat);
+spokeD.position.y = -(R-0.02)/2; wheelSpin.add(spokeD);
+
+// hab tengah
+const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.032, 20), rimMat);
+hub.rotation.x = Math.PI/2;
+wheelSpin.add(hub);
+const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.036, 12),
+  new THREE.MeshStandardMaterial({color:0x2ee6a8, emissive:0x0d6b4d, roughness:0.4}));
+badge.rotation.x = Math.PI/2;
+wheelSpin.add(badge);
+
+// penanda merah di atas
+const marker = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.026),
+  new THREE.MeshStandardMaterial({color:0xd8342e, roughness:0.5}));
+marker.position.y = R;
+wheelSpin.add(marker);
+
+/* ---------- TANGAN ---------- */
+const skinMat   = new THREE.MeshStandardMaterial({color:0xd7a173, roughness:0.85});
+const sleeveMat = new THREE.MeshStandardMaterial({color:0x24313f, roughness:0.95});
+
+function makeHand(side) {          // side: -1 kiri, +1 kanan
+  const g = new THREE.Group();
+
+  // tapak tangan (di luar rim)
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.105, 0.07), skinMat);
+  palm.position.set(side*0.036, -0.004, 0.016);
+  g.add(palm);
+
+  // 4 jari melingkari rim
+  for (let i = 0; i < 4; i++) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.019, 0.052), skinMat);
+    f.position.set(-side*0.006, 0.032 - i*0.0235, 0.026);
+    g.add(f);
+  }
+
+  // ibu jari
+  const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.055, 0.03), skinMat);
+  thumb.position.set(side*0.014, 0.062, 0.028);
+  thumb.rotation.z = -side*0.42;
+  g.add(thumb);
+
+  // lengan bawah
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.05, 0.34, 9), sleeveMat);
+  arm.rotation.x = 2.214;          // menghala ke bawah & ke pemandu
+  arm.rotation.z = -side*0.22;
+  arm.position.set(side*0.045, -0.11, 0.135);
+  g.add(arm);
+
+  g.position.set(side*R, 0, 0);
+  return g;
+}
+wheelSpin.add(makeHand(-1));
+wheelSpin.add(makeHand(1));
+
+/* =====================================================================
+   INPUT
+   ===================================================================== */
+const keys = { left:false, right:false, up:false, down:false };
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'arrowleft'  || k === 'a') { keys.left  = true; e.preventDefault(); }
+  if (k === 'arrowright' || k === 'd') { keys.right = true; e.preventDefault(); }
+  if (k === 'arrowup'    || k === 'w') { keys.up    = true; e.preventDefault(); }
+  if (k === 'arrowdown'  || k === 's') { keys.down  = true; e.preventDefault(); }
+}, { passive:false });
+
+addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'arrowleft'  || k === 'a') keys.left  = false;
+  if (k === 'arrowright' || k === 'd') keys.right = false;
+  if (k === 'arrowup'    || k === 'w') keys.up    = false;
+  if (k === 'arrowdown'  || k === 's') keys.down  = false;
+});
+
+document.querySelectorAll('[data-key]').forEach(btn => {
+  const k = btn.dataset.key;
+  const on  = e => { e.preventDefault(); keys[k] = true;  btn.classList.add('active'); };
+  const off = e => { e.preventDefault(); keys[k] = false; btn.classList.remove('active'); };
+  btn.addEventListener('pointerdown', on);
+  btn.addEventListener('pointerup', off);
+  btn.addEventListener('pointercancel', off);
+  btn.addEventListener('pointerleave', off);
+});
+
+/* =====================================================================
+   AUDIO ENJIN
+   ===================================================================== */
+let audio = null, muted = false;
+
+function initAudio() {
+  if (audio) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  const ctx = new AC();
+
+  const master = ctx.createGain();  master.gain.value = 0;
+  master.connect(ctx.destination);
+
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass'; filt.frequency.value = 600; filt.Q.value = 3.5;
+  filt.connect(master);
+
+  const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 65;
+  const o2 = ctx.createOscillator(); o2.type = 'square';   o2.frequency.value = 32.5;
+  const g2 = ctx.createGain(); g2.gain.value = 0.32;
+
+  o1.connect(filt); o2.connect(g2); g2.connect(filt);
+  o1.start(); o2.start();
+
+  audio = { ctx, o1, o2, filt, master };
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+function updateAudio(rpm, load) {
+  if (!audio) return;
+  const t = audio.ctx.currentTime;
+  const f = 52 + rpm * 145;
+  audio.o1.frequency.setTargetAtTime(f, t, 0.06);
+  audio.o2.frequency.setTargetAtTime(f * 0.5, t, 0.06);
+  audio.filt.frequency.setTargetAtTime(320 + rpm * 1500, t, 0.08);
+  audio.master.gain.setTargetAtTime(muted ? 0 : (0.028 + load * 0.05), t, 0.12);
+}
+
+/* =====================================================================
+   HUD
+   ===================================================================== */
+const spdNum = document.getElementById('spdNum');
+const spdBar = document.getElementById('spdBar');
+const gearNum = document.getElementById('gearNum');
+
+/* =====================================================================
+   LOOP UTAMA
+   ===================================================================== */
+let last = performance.now();
+let clockT = 0;
+
+function update(dt) {
+  clockT += dt;
+
+  /* ---- stereng ---- */
+  let steerTarget = 0;
+  if (keys.left)  steerTarget -= 1;
+  if (keys.right) steerTarget += 1;
+  steer += (steerTarget - steer) * Math.min(1, dt * 7.5);
+
+  /* ---- kelajuan ---- */
+  const onRoad  = Math.abs(CAR.x) < ROAD_W/2 - 0.3;
+  const topSpd  = onRoad ? MAX_SPEED : 16;
+
+  if (keys.up)        CAR.speed += 16 * dt;
+  else if (keys.down) CAR.speed -= 34 * dt;
+  else                CAR.speed -= 3.2 * dt;
+
+  if (!onRoad) CAR.speed -= 11 * dt;
+
+  CAR.speed = Math.max(0, Math.min(CAR.speed, topSpd));
+
+  /* ---- pergerakan ---- */
+  const sf = Math.min(1, CAR.speed / 10);          // makin laju, makin responsif
+  CAR.heading -= steer * 0.92 * sf * dt;
+
+  CAR.x += -Math.sin(CAR.heading) * CAR.speed * dt;
+  CAR.z += -Math.cos(CAR.heading) * CAR.speed * dt;
+  CAR.x = Math.max(-46, Math.min(46, CAR.x));
+
+  /* ---- kamera ---- */
+  const shake = Math.sin(clockT * 11) * 0.0035 * (CAR.speed / MAX_SPEED);
+  camera.position.set(CAR.x, 1.2 + shake, CAR.z);
+  camera.rotation.set(0, CAR.heading, -steer * 0.042);
+
+  /* ---- stereng visual ---- */
+  wheelSpin.rotation.z = -steer * 1.85;
+
+  /* ---- dunia bergerak ---- */
+  roadGroup.position.z = CAR.z - 380;
+  grass.position.set(CAR.x * 0.15, -0.03, CAR.z - 300);
+
+  for (const d of dashes) {
+    if (d.position.z > CAR.z + 30) d.position.z -= WRAP;
+  }
+
+  for (const t of trees) {
+    if (t.obj.position.z > CAR.z + 40) {
+      t.obj.position.z -= WRAP;
+      t.obj.position.x = t.side * (ROAD_W/2 + 3 + Math.random()*9);
+      t.obj.rotation.y = Math.random() * Math.PI * 2;
+      t.obj.scale.setScalar(0.85 + Math.random()*0.5);
+    }
+  }
+
+  for (const b of buildings) {
+    if (b.obj.position.z > CAR.z + 45) {
+      b.obj.position.z -= WRAP;
+      b.obj.position.x = b.side * (24 + Math.random()*26);
+      b.obj.rotation.y = Math.random() * 0.6;
+    }
+  }
+
+  /* ---- HUD ---- */
+  const kmh = CAR.speed * 3.6;
+  spdNum.textContent = Math.round(kmh);
+  spdBar.style.width = Math.min(100, (kmh / 215) * 100) + '%';
+
+  let gear = 'N';
+  if (kmh > 2)  gear = '1';
+  if (kmh > 30) gear = '2';
+  if (kmh > 58) gear = '3';
+  if (kmh > 88) gear = '4';
+  if (kmh > 124) gear = '5';
+  if (kmh > 164) gear = '6';
+  gearNum.textContent = gear;
+
+  /* ---- audio ---- */
+  const rpm = Math.min(1, (kmh % 32) / 32 * 0.75 + (kmh / 215) * 0.45);
+  updateAudio(rpm, keys.up ? 1 : 0);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  let dt = (now - last) / 1000;
+  last = now;
+  if (dt > 0.05) dt = 0.05;
+
+  update(dt);
+  renderer.render(scene, camera);
+}
+
+/* =====================================================================
+   RESIZE
+   ===================================================================== */
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* =====================================================================
+   MULA
+   ===================================================================== */
+const startScreen = document.getElementById('start');
+const startBtn    = document.getElementById('startBtn');
+const soundBtn    = document.getElementById('sound');
+
+startBtn.addEventListener('click', () => {
+  initAudio();
+  startScreen.classList.add('hide');
+  soundBtn.classList.add('show');
+  last = performance.now();
+});
+
+soundBtn.addEventListener('click', () => {
+  muted = !muted;
+  soundBtn.textContent = muted ? '🔇' : '🔊';
+});
+
+animate();
+</script>
+</body>
+</html>
