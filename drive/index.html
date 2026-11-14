@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>NEON WRESTLING 3D</title>
+<title>NEON WRESTLING 3D: MULTIPLAYER</title>
 <script type="importmap">
 {
   "imports": {
@@ -46,30 +46,37 @@
     opacity:0;transition:opacity 0.2s, transform 0.2s;pointer-events:none}
   #comboText.show{opacity:1;transform:translateX(-50%) scale(1.2)}
 
-  /* Butang */
-  #controls{position:fixed;inset:0;pointer-events:none;z-index:20}
+  /* Butang Kawalan */
+  #controls{position:fixed;inset:0;pointer-events:none;z-index:20;display:none}
   .btn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.3);
     background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
     font-weight:900;font-size:14px;color:#fff;transition:transform .1s, background .1s;
     box-shadow:0 0 15px rgba(0,0,0,0.5);text-align:center}
   .btn.active{transform:scale(.9);background:rgba(255,255,255,.3)}
 
-  .pad{position:absolute;bottom:20px;left:30px;width:160px;height:160px}
-  .pad .btn{width:60px;height:60px}
-  .pad .left{left:0;top:50px} .pad .right{right:0;top:50px}
-  
-  .actions{position:absolute;bottom:20px;right:30px;width:200px;height:180px}
-  .actions .punch{width:80px;height:80px;right:90px;bottom:0;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
-  .actions .grapple{width:80px;height:80px;right:0;bottom:20px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:12px}
-  .actions .run{width:60px;height:60px;right:80px;bottom:90px;border-radius:16px;border-color:#00ffff;color:#00ffff}
+  /* P1 Kawalan (Kiri) */
+  #p1-controls{position:absolute;bottom:20px;left:20px;width:180px;height:180px}
+  #p1-controls .left{left:0;bottom:50px;width:60px;height:60px}
+  #p1-controls .right{left:70px;bottom:50px;width:60px;height:60px}
+  #p1-controls .punch{left:0;bottom:130px;width:60px;height:60px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
+  #p1-controls .grapple{left:70px;bottom:130px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
+
+  /* P2 Kawalan (Kanan) */
+  #p2-controls{position:absolute;bottom:20px;right:20px;width:180px;height:180px}
+  #p2-controls .left{right:70px;bottom:50px;width:60px;height:60px}
+  #p2-controls .right{right:0;bottom:50px;width:60px;height:60px}
+  #p2-controls .punch{right:0;bottom:130px;width:60px;height:60px;background:rgba(255,204,0,.2);border-color:#ffcc00;color:#ffcc00}
+  #p2-controls .grapple{right:70px;bottom:130px;width:60px;height:60px;background:rgba(255,0,85,.2);border-color:#ff0055;color:#ff0055;font-size:10px}
 
   #startScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at center, #220000, #000);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
+    display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s;padding:20px}
   #startScreen.hide{opacity:0;pointer-events:none}
-  #startScreen h1{font-size:44px;color:#ffcc00;text-shadow:0 0 20px #ffcc00, 0 0 40px #ff8800;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
+  #startScreen h1{font-size:40px;color:#ffcc00;text-shadow:0 0 20px #ffcc00, 0 0 40px #ff8800;letter-spacing:4px;margin-bottom:10px;text-align:center;line-height:1.1}
   #startScreen p{opacity:0.7;margin-bottom:30px;letter-spacing:1px}
-  .start-btn{padding:15px 40px;font-size:20px;font-weight:900;color:#000;background:#ffcc00;
-    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #ffcc00;letter-spacing:2px}
+  
+  .start-btn{padding:15px 30px;font-size:18px;font-weight:900;color:#000;background:#ffcc00;
+    border:none;border-radius:30px;cursor:pointer;box-shadow:0 0 30px #ffcc00;letter-spacing:2px;margin:10px;width:250px}
+  .start-btn.blue{background:#00ffff;box-shadow:0 0 30px #00ffff}
 </style>
 </head>
 <body>
@@ -83,32 +90,37 @@
 
 <div id="hud">
   <div id="p1-ui" class="health-container">
-    <div class="name" style="color:#00ffff">PEMAIN</div>
+    <div class="name" style="color:#00ffff">PEMAIN 1</div>
     <div class="health-bar"><div class="health-fill" id="p1-fill"></div></div>
   </div>
   <div id="p2-ui" class="health-container">
-    <div class="name" style="color:#ff0055">PENENTANG</div>
+    <div class="name" style="color:#ff0055" id="p2-name">PENENTANG</div>
     <div class="health-bar"><div class="health-fill" id="p2-fill"></div></div>
   </div>
   <div id="comboText">SLAM!</div>
 </div>
 
+<!-- Kawalan 2 Pemain -->
 <div id="controls">
-  <div class="pad">
-    <div class="btn left" data-k="left">◀</div>
-    <div class="btn right" data-k="right">▶</div>
+  <div id="p1-controls">
+    <div class="btn left" data-k="p1_left">◀</div>
+    <div class="btn right" data-k="p1_right">▶</div>
+    <div class="btn punch" data-k="p1_punch">TUMBUK</div>
+    <div class="btn grapple" data-k="p1_grapple">BANTING</div>
   </div>
-  <div class="actions">
-    <div class="btn punch" data-k="punch">TUMBUK</div>
-    <div class="btn grapple" data-k="grapple">BANTING</div>
-    <div class="btn run" data-k="run">LARI</div>
+  <div id="p2-controls">
+    <div class="btn left" data-k="p2_left">◀</div>
+    <div class="btn right" data-k="p2_right">▶</div>
+    <div class="btn punch" data-k="p2_punch">TUMBUK</div>
+    <div class="btn grapple" data-k="p2_grapple">BANTING</div>
   </div>
 </div>
 
 <div id="startScreen">
   <h1>NEON WRESTLING<br>3D</h1>
-  <p>KAYANGAN EDITION</p>
-  <button class="start-btn" id="playBtn">MASUK RING</button>
+  <p>PILIH MOD PERMAINAN</p>
+  <button class="start-btn" id="btn1P">1 PEMAIN (LAWAN BOT)</button>
+  <button class="start-btn blue" id="btn2P">2 PEMAIN (LAWAN KAWAN)</button>
 </div>
 
 <script type="module">
@@ -117,32 +129,18 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-/* ============================================================
-   AUDIO
-   ============================================================ */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
-
-function initAudio() {
-  if (!audioCtx) audioCtx = new AudioContext();
-}
-
+function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
 function playPunchSound() {
   if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+  const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+  osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
-  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+  osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
 }
 
-/* ============================================================
-   SETUP 3D + BLOOM
-   ============================================================ */
 const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -163,9 +161,6 @@ const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 
-/* ============================================================
-   CAHAYA
-   ============================================================ */
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const spot1 = new THREE.SpotLight(0xffffff, 3, 50, Math.PI/4, 0.5, 1);
 spot1.position.set(-10, 20, 10); spot1.target.position.set(0,0,0);
@@ -174,12 +169,8 @@ const spot2 = new THREE.SpotLight(0xff0055, 3, 50, Math.PI/4, 0.5, 1);
 spot2.position.set(10, 20, -10); spot2.target.position.set(0,0,0);
 scene.add(spot2); scene.add(spot2.target);
 
-/* ============================================================
-   BINA GELANGGANG
-   ============================================================ */
 const ringGroup = new THREE.Group();
 scene.add(ringGroup);
-
 const matTex = (() => {
   const c = document.createElement('canvas'); c.width = 512; c.height = 512;
   const ctx = c.getContext('2d');
@@ -191,22 +182,17 @@ const matTex = (() => {
 })();
 const canvasMat = new THREE.MeshStandardMaterial({map: matTex, roughness: 0.8});
 const ringFloor = new THREE.Mesh(new THREE.BoxGeometry(20, 1, 20), canvasMat);
-ringFloor.position.y = 1;
-ringGroup.add(ringFloor);
+ringFloor.position.y = 1; ringGroup.add(ringFloor);
 
 const postMat = new THREE.MeshStandardMaterial({color: 0x222222, metalness: 0.8});
 const ropeMat = new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5});
 const postPositions = [[-10, -10], [10, -10], [-10, 10], [10, 10]];
-
 for (const [x, z] of postPositions) {
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5, 8), postMat);
-  post.position.set(x, 3.5, z);
-  ringGroup.add(post);
+  post.position.set(x, 3.5, z); ringGroup.add(post);
 }
 for (let i = 1; i <= 3; i++) {
-  const y = i * 1.5 + 0.5;
-  const rGeoH = new THREE.CylinderGeometry(0.05, 0.05, 20, 6);
-  
+  const y = i * 1.5 + 0.5; const rGeoH = new THREE.CylinderGeometry(0.05, 0.05, 20, 6);
   const r1 = new THREE.Mesh(rGeoH, ropeMat); r1.rotation.z = Math.PI/2; r1.position.set(0, y, -10); ringGroup.add(r1);
   const r2 = new THREE.Mesh(rGeoH, ropeMat); r2.rotation.z = Math.PI/2; r2.position.set(0, y, 10); ringGroup.add(r2);
   const r3 = new THREE.Mesh(rGeoH, ropeMat); r3.rotation.x = Math.PI/2; r3.position.set(-10, y, 0); ringGroup.add(r3);
@@ -219,16 +205,13 @@ const crowdMat = new THREE.MeshStandardMaterial({color: 0x333333});
 const crowdInstanced = new THREE.InstancedMesh(crowdGeo, crowdMat, crowdCount);
 const dummy = new THREE.Object3D();
 const crowdData = [];
-
 for (let i = 0; i < crowdCount; i++) {
   let x, z;
   if (i < 100) { x = -15 - Math.random()*10; z = -15 + (i/100)*30; }
   else if (i < 200) { x = 15 + Math.random()*10; z = -15 + ((i-100)/100)*30; }
   else { x = -15 + ((i-200)/100)*30; z = -15 - Math.random()*10; }
-  
   const y = Math.random() * 2;
-  dummy.position.set(x, y, z);
-  dummy.updateMatrix();
+  dummy.position.set(x, y, z); dummy.updateMatrix();
   crowdInstanced.setMatrixAt(i, dummy.matrix);
   crowdInstanced.setColorAt(i, new THREE.Color().setHSL(Math.random(), 0.8, 0.5));
   crowdData.push({baseY: y, phase: Math.random() * Math.PI * 2});
@@ -236,31 +219,34 @@ for (let i = 0; i < crowdCount; i++) {
 scene.add(crowdInstanced);
 
 /* ============================================================
-   PEMAIN GUSTI (DENGAN 2 GAMBAR MUKA)
+   PEMAIN GUSTI (FIX MUKA SALING MENGADAP)
    ============================================================ */
 const textureLoader = new THREE.TextureLoader();
-
-// Gambar Pemain (Awak)
 const playerFaceTex = textureLoader.load('IMG_0179.jpeg'); 
-// Gambar Musuh (Bot) 
 const botFaceTex = textureLoader.load('IMG_4354.jpeg'); 
 
 function createWrestler(colorHex, faceTexture) {
   const group = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({color: colorHex, roughness: 0.4, metalness: 0.2});
   const skinMat = new THREE.MeshStandardMaterial({color: 0xd7a173, roughness: 0.8});
+  const faceMat = new THREE.MeshStandardMaterial({map: faceTexture, color: 0xffffff, roughness: 0.5});
 
   const torso = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2, 0.8), mat);
   torso.position.y = 3.5; group.add(torso);
 
-  // Logik Kepala guna gambar
   const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-  const faceMat = new THREE.MeshStandardMaterial({map: faceTexture, roughness: 0.5});
   
-  // Kanan, Kiri, Atas, Bawah, Depan (Gambar), Belakang
-  const headMats = [skinMat, skinMat, skinMat, skinMat, faceMat, skinMat];
+  // Kita pastikan gambar ada kat KIRI, KANAN, DEPAN, BELAKANG
+  const headMats = [
+    faceMat,  // Kanan (+X)
+    faceMat,  // Kiri (-X)
+    skinMat,  // Atas (+Y)
+    skinMat,  // Bawah (-Y)
+    faceMat,  // Depan (+Z)
+    faceMat   // Belakang (-Z)
+  ];
+  
   const head = new THREE.Mesh(headGeo, headMats);
-  
   head.position.y = 5; group.add(head);
 
   const armGeo = new THREE.CylinderGeometry(0.3, 0.25, 2, 8);
@@ -280,46 +266,54 @@ function createWrestler(colorHex, faceTexture) {
   group.userData = {
     parts: { armL, armR, legL, legR, head, torso },
     velocity: new THREE.Vector3(),
-    health: 100,
-    state: 'idle',
-    stateTimer: 0,
-    facing: 0,
+    health: 100, state: 'idle', stateTimer: 0, facing: 0,
   };
   return group;
 }
 
 const p1 = createWrestler(0x00ffff, playerFaceTex); 
-p1.position.set(-5, 1.5, 0);
-p1.userData.facing = Math.PI/2;
-scene.add(p1);
-
+p1.position.set(-5, 1.5, 0); p1.userData.facing = Math.PI/2; scene.add(p1);
 const p2 = createWrestler(0xff0055, botFaceTex);
-p2.position.set(5, 1.5, 0);
-p2.userData.facing = -Math.PI/2;
-scene.add(p2);
+p2.position.set(5, 1.5, 0); p2.userData.facing = -Math.PI/2; scene.add(p2);
 
 /* ============================================================
-   KAWALAN
+   KAWALAN & MOD PERMAINAN
    ============================================================ */
-const keys = { left:false, right:false, punch:false, grapple:false, run:false };
+let gameMode = 'menu'; // 'bot' atau '2p'
+const keys = { 
+  p1_left:false, p1_right:false, p1_punch:false, p1_grapple:false,
+  p2_left:false, p2_right:false, p2_punch:false, p2_grapple:false
+};
 
+// Keyboard Input
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
-  if(k==='a'||k==='arrowleft') keys.left = true;
-  if(k==='d'||k==='arrowright') keys.right = true;
-  if(k==='j'||k==='f') keys.punch = true;
-  if(k==='k'||k==='g') keys.grapple = true;
-  if(k==='shift') keys.run = true;
+  // P1 Keyboard (A, D, F, G)
+  if(k==='a') keys.p1_left = true;
+  if(k==='d') keys.p1_right = true;
+  if(k==='f') keys.p1_punch = true;
+  if(k==='g') keys.p1_grapple = true;
+  
+  // P2 Keyboard (Panah Kiri/Kanan, 1, 2)
+  if(k==='arrowleft') keys.p2_left = true;
+  if(k==='arrowright') keys.p2_right = true;
+  if(k==='1') keys.p2_punch = true;
+  if(k==='2') keys.p2_grapple = true;
 });
 addEventListener('keyup', e => {
   const k = e.key.toLowerCase();
-  if(k==='a'||k==='arrowleft') keys.left = false;
-  if(k==='d'||k==='arrowright') keys.right = false;
-  if(k==='j'||k==='f') keys.punch = false;
-  if(k==='k'||k==='g') keys.grapple = false;
-  if(k==='shift') keys.run = false;
+  if(k==='a') keys.p1_left = false;
+  if(k==='d') keys.p1_right = false;
+  if(k==='f') keys.p1_punch = false;
+  if(k==='g') keys.p1_grapple = false;
+  
+  if(k==='arrowleft') keys.p2_left = false;
+  if(k==='arrowright') keys.p2_right = false;
+  if(k==='1') keys.p2_punch = false;
+  if(k==='2') keys.p2_grapple = false;
 });
 
+// Touch Input
 document.querySelectorAll('[data-k]').forEach(btn => {
   const k = btn.dataset.k;
   const on = e => { e.preventDefault(); keys[k] = true; btn.classList.add('active'); };
@@ -335,138 +329,109 @@ document.querySelectorAll('[data-k]').forEach(btn => {
    LOGIK GUSTI
    ============================================================ */
 const arenaLimit = 8.5;
-
 function updateWrestler(w, dt, isPlayer) {
   const ud = w.userData;
-  
   w.position.x = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.x));
   w.position.z = Math.max(-arenaLimit, Math.min(arenaLimit, w.position.z));
-
-  ud.velocity.y -= 30 * dt;
-  w.position.y += ud.velocity.y * dt;
-  if (w.position.y <= 1.5) {
-    w.position.y = 1.5;
-    ud.velocity.y = 0;
-  }
-  
-  if(ud.stateTimer > 0) {
-    ud.stateTimer -= dt;
-    if(ud.stateTimer <= 0) ud.state = 'idle';
-  }
-
+  ud.velocity.y -= 30 * dt; w.position.y += ud.velocity.y * dt;
+  if (w.position.y <= 1.5) { w.position.y = 1.5; ud.velocity.y = 0; }
+  if(ud.stateTimer > 0) { ud.stateTimer -= dt; if(ud.stateTimer <= 0) ud.state = 'idle'; }
   const parts = ud.parts;
-
   if (ud.state === 'hurt' || ud.state === 'grappled') {
     w.rotation.z = Math.sin(performance.now()*0.03) * 0.5;
     w.rotation.x = Math.cos(performance.now()*0.04) * 0.5;
     parts.armL.rotation.x = Math.sin(performance.now()*0.05) * 1;
     parts.armR.rotation.x = -Math.sin(performance.now()*0.05) * 1;
   } else {
-    w.rotation.z *= 0.8;
-    w.rotation.x *= 0.8;
-    
+    w.rotation.z *= 0.8; w.rotation.x *= 0.8;
     if (ud.state === 'punch') {
       parts.armR.rotation.x = -Math.PI/2 + Math.sin(performance.now() * 0.05) * 0.5;
       parts.armL.rotation.x = 0.5;
     } else if (ud.state === 'slam') {
-      parts.armR.rotation.x = -Math.PI;
-      parts.armL.rotation.x = -Math.PI;
+      parts.armR.rotation.x = -Math.PI; parts.armL.rotation.x = -Math.PI;
     } else if (Math.abs(ud.velocity.x) > 0.5) {
-      const speedMult = keys.run ? 0.03 : 0.015;
-      const cycle = performance.now() * speedMult;
-      parts.legL.rotation.x = Math.sin(cycle) * 0.8;
-      parts.legR.rotation.x = -Math.sin(cycle) * 0.8;
-      parts.armL.rotation.x = -Math.sin(cycle) * 0.5;
-      parts.armR.rotation.x = Math.sin(cycle) * 0.5;
+      const cycle = performance.now() * 0.015;
+      parts.legL.rotation.x = Math.sin(cycle) * 0.8; parts.legR.rotation.x = -Math.sin(cycle) * 0.8;
+      parts.armL.rotation.x = -Math.sin(cycle) * 0.5; parts.armR.rotation.x = Math.sin(cycle) * 0.5;
     } else {
       parts.legL.rotation.x *= 0.8; parts.legR.rotation.x *= 0.8;
       parts.armL.rotation.x *= 0.8; parts.armR.rotation.x *= 0.8;
     }
   }
-
-  ud.velocity.x *= 0.85;
-  w.position.x += ud.velocity.x * dt;
-
+  ud.velocity.x *= 0.85; w.position.x += ud.velocity.x * dt;
+  
+  // Saling mengadap muka
   const opponent = isPlayer ? p2 : p1;
-  if (opponent.position.x > w.position.x) {
-    w.userData.facing = Math.PI/2;
-  } else {
-    w.userData.facing = -Math.PI/2;
-  }
+  if (opponent.position.x > w.position.x) { w.userData.facing = Math.PI/2; } 
+  else { w.userData.facing = -Math.PI/2; }
   w.rotation.y = w.userData.facing;
 }
 
-function handlePlayerInput(dt) {
+function handleP1Input(dt) {
   const ud = p1.userData;
   if (ud.state === 'hurt') return;
-
-  const moveSpeed = keys.run ? 15 : 8;
-  if (keys.left) ud.velocity.x = -moveSpeed;
-  if (keys.right) ud.velocity.x = moveSpeed;
-
+  if (keys.p1_left) ud.velocity.x = -8;
+  if (keys.p1_right) ud.velocity.x = 8;
+  
   const dist = Math.abs(p1.position.x - p2.position.x);
-
-  if (keys.punch && ud.stateTimer <= 0 && dist < 3.5) {
-    ud.state = 'punch';
-    ud.stateTimer = 0.3;
-    p2.userData.health -= 8;
-    p2.userData.state = 'hurt';
-    p2.userData.stateTimer = 0.3;
+  if (keys.p1_punch && ud.stateTimer <= 0 && dist < 3.5) {
+    ud.state = 'punch'; ud.stateTimer = 0.3; p2.userData.health -= 8;
+    p2.userData.state = 'hurt'; p2.userData.stateTimer = 0.3;
     p2.userData.velocity.x = (p2.position.x > p1.position.x ? 1 : -1) * 10;
-    updateHealthUI();
-    playPunchSound();
-    showComboText("PUNCH!");
-    keys.punch = false;
+    updateHealthUI(); playPunchSound(); showComboText("P1 PUNCH!"); keys.p1_punch = false;
   }
-
-  if (keys.grapple && ud.stateTimer <= 0 && dist < 2.5) {
-    ud.state = 'slam';
-    ud.stateTimer = 1.0;
-    p2.userData.state = 'grappled';
-    p2.userData.stateTimer = 1.2;
-    
-    p2.position.x = p1.position.x;
-    p2.position.y = 4.5;
-    
+  if (keys.p1_grapple && ud.stateTimer <= 0 && dist < 2.5) {
+    ud.state = 'slam'; ud.stateTimer = 1.0; p2.userData.state = 'grappled'; p2.userData.stateTimer = 1.2;
+    p2.position.x = p1.position.x; p2.position.y = 4.5;
     setTimeout(() => {
-      p2.position.y = 1.5;
-      p2.userData.health -= 30;
-      p2.userData.velocity.y = -10;
+      p2.position.y = 1.5; p2.userData.health -= 30; p2.userData.velocity.y = -10;
       p2.userData.velocity.x = (p2.position.x > p1.position.x ? 5 : -5);
-      updateHealthUI();
-      playPunchSound();
-      showComboText("BODY SLAM!");
-      createHitEffect(p2.position, 0xffcc00);
-    }, 800);
-    
-    keys.grapple = false;
+      updateHealthUI(); playPunchSound(); showComboText("P1 SLAM!"); createHitEffect(p2.position, 0xffcc00);
+    }, 800); keys.p1_grapple = false;
+  }
+}
+
+function handleP2Input(dt) {
+  const ud = p2.userData;
+  if (ud.state === 'hurt') return;
+  if (keys.p2_left) ud.velocity.x = -8;
+  if (keys.p2_right) ud.velocity.x = 8;
+  
+  const dist = Math.abs(p1.position.x - p2.position.x);
+  if (keys.p2_punch && ud.stateTimer <= 0 && dist < 3.5) {
+    ud.state = 'punch'; ud.stateTimer = 0.3; p1.userData.health -= 8;
+    p1.userData.state = 'hurt'; p1.userData.stateTimer = 0.3;
+    p1.userData.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 10;
+    updateHealthUI(); playPunchSound(); showComboText("P2 PUNCH!"); keys.p2_punch = false;
+  }
+  if (keys.p2_grapple && ud.stateTimer <= 0 && dist < 2.5) {
+    ud.state = 'slam'; ud.stateTimer = 1.0; p1.userData.state = 'grappled'; p1.userData.stateTimer = 1.2;
+    p1.position.x = p2.position.x; p1.position.y = 4.5;
+    setTimeout(() => {
+      p1.position.y = 1.5; p1.userData.health -= 30; p1.userData.velocity.y = -10;
+      p1.userData.velocity.x = (p1.position.x > p2.position.x ? 5 : -5);
+      updateHealthUI(); playPunchSound(); showComboText("P2 SLAM!"); createHitEffect(p1.position, 0x00ffff);
+    }, 800); keys.p2_grapple = false;
   }
 }
 
 function handleBotAI(dt) {
   const ud = p2.userData;
   if (ud.state === 'hurt' || ud.state === 'grappled') return;
-
   const dist = Math.abs(p2.position.x - p1.position.x);
-  
-  if (dist > 3) {
-    ud.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 6;
-  } else {
+  if (dist > 3) { ud.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 6; } 
+  else {
     if (ud.stateTimer <= 0 && Math.random() < 0.05) {
-      ud.state = 'punch';
-      ud.stateTimer = 0.3;
-      p1.userData.health -= 8;
-      p1.userData.state = 'hurt';
-      p1.userData.stateTimer = 0.3;
+      ud.state = 'punch'; ud.stateTimer = 0.3; p1.userData.health -= 8;
+      p1.userData.state = 'hurt'; p1.userData.stateTimer = 0.3;
       p1.userData.velocity.x = (p1.position.x > p2.position.x ? 1 : -1) * 10;
-      updateHealthUI();
-      playPunchSound();
+      updateHealthUI(); playPunchSound();
     }
   }
 }
 
 /* ============================================================
-   KESAN VISUAL & UI
+   UI & GAME LOOP
    ============================================================ */
 const particles = [];
 function createHitEffect(pos, color) {
@@ -474,17 +439,13 @@ function createHitEffect(pos, color) {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), new THREE.MeshBasicMaterial({color}));
     p.position.copy(pos).add(new THREE.Vector3(0, 2, 0));
     const vel = new THREE.Vector3((Math.random()-0.5)*15, Math.random()*15, (Math.random()-0.5)*15);
-    p.userData = { vel, life: 0.6 };
-    scene.add(p); particles.push(p);
+    p.userData = { vel, life: 0.6 }; scene.add(p); particles.push(p);
   }
 }
 function updateParticles(dt) {
   for(let i=particles.length-1; i>=0; i--) {
-    const p = particles[i];
-    p.position.addScaledVector(p.userData.vel, dt);
-    p.userData.vel.y -= 30 * dt;
-    p.userData.life -= dt;
-    p.scale.setScalar(p.userData.life * 2);
+    const p = particles[i]; p.position.addScaledVector(p.userData.vel, dt);
+    p.userData.vel.y -= 30 * dt; p.userData.life -= dt; p.scale.setScalar(p.userData.life * 2);
     if(p.userData.life <= 0) { scene.remove(p); particles.splice(i, 1); }
   }
 }
@@ -492,28 +453,21 @@ function updateParticles(dt) {
 const p1Fill = document.getElementById('p1-fill');
 const p2Fill = document.getElementById('p2-fill');
 const comboTxt = document.getElementById('comboText');
-
 function updateHealthUI() {
   p1Fill.style.width = Math.max(0, p1.userData.health) + '%';
   p2Fill.style.width = Math.max(0, p2.userData.health) + '%';
 }
-
 function showComboText(text) {
-  comboTxt.textContent = text;
-  comboTxt.classList.add('show');
+  comboTxt.textContent = text; comboTxt.classList.add('show');
   setTimeout(() => comboTxt.classList.remove('show'), 800);
 }
 
-let gameState = 'menu';
 let last = performance.now();
-
 function checkGameOver() {
-  if(gameState !== 'playing') return;
+  if(gameMode === 'menu') return;
   if(p1.userData.health <= 0 || p2.userData.health <= 0) {
-    gameState = 'over';
-    const pWins = p2.userData.health <= 0;
-    showComboText(pWins ? "AWAK MENANG!" : "AWAK KALAH!");
-    
+    gameMode = 'over'; const pWins = p2.userData.health <= 0;
+    showComboText(pWins ? "PEMAIN 1 MENANG!" : "PEMAIN 2 MENANG!");
     p1.userData.state = 'hurt'; p1.userData.stateTimer = 999;
     p2.userData.state = 'hurt'; p2.userData.stateTimer = 999;
     
@@ -523,67 +477,69 @@ function checkGameOver() {
       p1.userData.velocity.set(0,0,0); p2.userData.velocity.set(0,0,0);
       p1.userData.state = 'idle'; p2.userData.state = 'idle';
       p1.userData.stateTimer = 0; p2.userData.stateTimer = 0;
-      gameState = 'playing'; updateHealthUI();
+      gameMode = document.getElementById('p2-name').textContent === 'PENENTANG' ? 'bot' : '2p'; 
+      updateHealthUI();
     }, 3000);
   }
 }
 
 function animate() {
   requestAnimationFrame(animate);
-  const now = performance.now();
-  let dt = (now - last) / 1000;
-  last = now;
+  const now = performance.now(); let dt = (now - last) / 1000; last = now;
   if(dt > 0.05) dt = 0.05;
-
-  if(gameState === 'playing') {
-    handlePlayerInput(dt);
-    handleBotAI(dt);
-    updateWrestler(p1, dt, true);
-    updateWrestler(p2, dt, false);
-    checkGameOver();
+  
+  if(gameMode === 'bot') {
+    handleP1Input(dt); handleBotAI(dt);
+    updateWrestler(p1, dt, true); updateWrestler(p2, dt, false); checkGameOver();
+  } else if (gameMode === '2p') {
+    handleP1Input(dt); handleP2Input(dt);
+    updateWrestler(p1, dt, true); updateWrestler(p2, dt, false); checkGameOver();
   }
   
   updateParticles(dt);
-
   const time = now * 0.005;
   for(let i=0; i<crowdCount; i++) {
-    const data = crowdData[i];
-    dummy.position.y = data.baseY + Math.abs(Math.sin(time + data.phase)) * 0.5;
-    dummy.updateMatrix();
-    crowdInstanced.setMatrixAt(i, dummy.matrix);
+    const data = crowdData[i]; dummy.position.y = data.baseY + Math.abs(Math.sin(time + data.phase)) * 0.5;
+    dummy.updateMatrix(); crowdInstanced.setMatrixAt(i, dummy.matrix);
   }
   crowdInstanced.instanceMatrix.needsUpdate = true;
-
+  
   const midX = (p1.position.x + p2.position.x) / 2;
   const distX = Math.abs(p1.position.x - p2.position.x);
-  
-  const targetCamZ = 25 + distX * 0.5;
-  const targetCamY = 10 + distX * 0.2;
-  
+  const targetCamZ = 25 + distX * 0.5; const targetCamY = 10 + distX * 0.2;
   camera.position.x += (midX - camera.position.x) * dt * 3;
   camera.position.z += (targetCamZ - camera.position.z) * dt * 2;
   camera.position.y += (targetCamY - camera.position.y) * dt * 2;
   camera.lookAt(midX, 3, 0);
-
   composer.render();
 }
 
 addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  composer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
 });
 
-document.getElementById('playBtn').addEventListener('click', () => {
+// Butang Mula
+function startGame(mode) {
   initAudio();
+  gameMode = mode;
   document.getElementById('startScreen').classList.add('hide');
-  gameState = 'playing';
+  document.getElementById('controls').style.display = 'block';
+  
+  if(mode === 'bot') {
+    document.getElementById('p2-name').textContent = 'PENENTANG';
+    document.getElementById('p2-controls').style.display = 'none';
+  } else {
+    document.getElementById('p2-name').textContent = 'PEMAIN 2';
+    document.getElementById('p2-controls').style.display = 'block';
+  }
   last = performance.now();
-});
+}
 
-updateHealthUI();
-animate();
+document.getElementById('btn1P').addEventListener('click', () => startGame('bot'));
+document.getElementById('btn2P').addEventListener('click', () => startGame('2p'));
+
+updateHealthUI(); animate();
 </script>
 </body>
 </html>
