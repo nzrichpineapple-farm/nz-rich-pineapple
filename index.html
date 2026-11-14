@@ -1039,10 +1039,10 @@
             <!-- BAHAGIAN AI BARU -->
             <div class="card" style="background: linear-gradient(135deg, #e0f2fe, #f0fdf4); border: 2px solid #bae6fd;">
                 <div class="card-title" style="color: #0284c7;">🤖 Kalkulator Pintar (AI)</div>
-                <p style="font-size:13px; color:#666; margin-bottom:15px;">Taip soalan anda dalam bahasa biasa. Sistem akan *auto-kira* benih & baja beserta formulanya.</p>
+                <p style="font-size:13px; color:#666; margin-bottom:15px;">Taip soalan anda dalam bahasa biasa. Sistem akan *auto-kira* benih, baja, atau hasil jualan beserta formulanya.</p>
                 
                 <div class="form-group">
-                    <input type="text" id="ai-input" class="form-control" placeholder="Cth: Saya nak tanam nenas 2.5 ekar" style="border-color:#38bdf8;">
+                    <input type="text" id="ai-input" class="form-control" placeholder="Cth: Saya nak tanam nenas 2.5 ekar / 1 tan harga 3 ringgit" style="border-color:#38bdf8;">
                 </div>
                 <div class="btn-group">
                     <button class="btn" style="background:#0284c7; color:white;" onclick="kiraAI()">✨ Kira Sekarang</button>
@@ -2572,7 +2572,7 @@
             document.getElementById('kalk-hasil-baja').innerText = hasil.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
         }
 
-        // FUNGSI AI KALKULATOR
+        // FUNGSI AI KALKULATOR (UPGRADE V2)
         function kiraAI() {
             let teks = document.getElementById('ai-input').value.toLowerCase();
             let resultBox = document.getElementById('ai-result');
@@ -2580,10 +2580,52 @@
 
             if(!teks) return showToast("Sila taip soalan anda.", "error");
 
-            // 1. "AI" Cari Nombor dalam ayat
+            let response = "";
+
+            // ==========================================
+            // SKENARIO 1: KIRA HARGA (RM) UNTUK BERAT (TAN/KG)
+            // ==========================================
+            if (teks.includes("ringgit") || teks.includes("rm") || teks.includes("harga")) {
+                // Cuba cari harga per unit (cth: 3 ringgit)
+                let hargaMatch = teks.match(/(\d+(\.\d+)?)\s*(ringgit|rm)/);
+                let hargaSebiji = hargaMatch ? parseFloat(hargaMatch[1]) : 0;
+
+                // Cuba cari target berat (cth: 1 tan)
+                let isTan = teks.includes("tan");
+                let isKg = teks.includes("kg");
+
+                if (hargaSebiji > 0 && (isTan || isKg)) {
+                    // Andaian: Berat purata sebiji nenas = 1.5 kg
+                    let beratPurataNenas = 1.5;
+                    let targetKg = isTan ? 1000 : 1; // 1 tan = 1000kg
+                    let targetUnit = isTan ? "Tan" : "Kg";
+
+                    let jumlahBiji = targetKg / beratPurataNenas;
+                    let jumlahHarga = jumlahBiji * hargaSebiji;
+
+                    response = `
+                        <p style="margin-bottom:10px;">Ini kiraan untuk <b>"${teks}"</b>:</p>
+                        <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px dashed #cbd5e1;">
+                            <i>(Saya andaikan berat purata sebiji nenas = <b>1.5 kg</b>)</i><br><br>
+                            <b>1. Jumlah Biji untuk ${targetUnit}:</b><br>
+                            ${targetKg} kg ÷ 1.5 kg/biji = <b>${Math.round(jumlahBiji).toLocaleString()} Biji</b><br><br>
+                            <b>2. Jumlah Harga:</b><br>
+                            ${Math.round(jumlahBiji).toLocaleString()} biji × RM ${hargaSebiji} = <b style="color:var(--primary-green); font-size:16px;">RM ${jumlahHarga.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b>
+                        </div>
+                        <p style="font-size:11px; color:#64748b; margin-top:10px;">*Kalau berat nenas kau lain (cth: 2kg), ganti kiraan 1.5kg tu dengan berat sebenar.</p>
+                    `;
+                    textBox.innerHTML = response;
+                    resultBox.style.display = 'block';
+                    return; // Tamatkan fungsi di sini
+                }
+            }
+
+            // ==========================================
+            // SKENARIO 2: KIRA TANAMAN & BAJA (Logik Lama)
+            // ==========================================
             let matchNum = teks.match(/\d+(\.\d+)?/);
             if (!matchNum) {
-                textBox.innerHTML = "Maaf Bos, saya tak jumpa nombor dalam ayat tu. Cuba taip macam ni: <b>'Nak tanam 2 ekar'</b> atau <b>'Kira baja untuk 5000 pokok'</b>.";
+                textBox.innerHTML = "Maaf Bos, saya tak jumpa nombor. Cuba taip macam ni: <b>'Nak tanam 2 ekar'</b> atau <b>'Kira baja untuk 5000 pokok'</b>.";
                 resultBox.style.display = 'block';
                 return;
             }
@@ -2594,7 +2636,6 @@
             let baja = 0;
             let formula = "";
 
-            // 2. "AI" Faham konteks (Ekar ke Pokok?)
             if (teks.includes("ekar") || teks.includes("acre")) {
                 acre = num;
                 pokok = acre * 5000;
@@ -2635,8 +2676,8 @@
             }
 
             // 3. Paparkan Jawapan Macam AI
-            let response = `
-                <p style="margin-bottom:10px;">Berdasarkan kiraan, ini adalah rumusan untuk <b>${teks}</b>:</p>
+            response = `
+                <p style="margin-bottom:10px;">Berdasarkan kiraan, ini adalah rumusan untuk <b>"${teks}"</b>:</p>
                 <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px dashed #cbd5e1;">
                     ${formula}
                 </div>
