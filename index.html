@@ -1035,8 +1035,29 @@
 
         <!-- KALKULATOR LADANG -->
         <div id="page-kalkulator" class="page">
+            
+            <!-- BAHAGIAN AI BARU -->
+            <div class="card" style="background: linear-gradient(135deg, #e0f2fe, #f0fdf4); border: 2px solid #bae6fd;">
+                <div class="card-title" style="color: #0284c7;">🤖 Kalkulator Pintar (AI)</div>
+                <p style="font-size:13px; color:#666; margin-bottom:15px;">Taip soalan anda dalam bahasa biasa. Sistem akan *auto-kira* benih & baja beserta formulanya.</p>
+                
+                <div class="form-group">
+                    <input type="text" id="ai-input" class="form-control" placeholder="Cth: Saya nak tanam nenas 2.5 ekar" style="border-color:#38bdf8;">
+                </div>
+                <div class="btn-group">
+                    <button class="btn" style="background:#0284c7; color:white;" onclick="kiraAI()">✨ Kira Sekarang</button>
+                </div>
+
+                <!-- Kotak Hasil AI -->
+                <div id="ai-result" style="display:none; margin-top:15px; background:white; padding:15px; border-radius:8px; border-left:4px solid #0284c7;">
+                    <h4 style="color:#0f172a; font-size:14px; margin-bottom:10px;">📝 Jawapan AI:</h4>
+                    <div id="ai-text" style="font-size:13px; line-height:1.6; color:#333;"></div>
+                </div>
+            </div>
+            <!-- TAMAT BAHAGIAN AI -->
+
             <div class="card">
-                <div class="card-title">🧮 Kalkulator Benih Nenas</div>
+                <div class="card-title">🧮 Kalkulator Benih Nenas (Manual)</div>
                 <p style="font-size:13px; color:#666; margin-bottom:15px;">Anggaran kepadatan standard: 5,000 pokok / ekar.</p>
                 <div class="form-group">
                     <label>Luas Tanah (Ekar)</label>
@@ -2549,6 +2570,81 @@
             let pokok = parseFloat(document.getElementById('kalk-pokok').value) || 0;
             let hasil = pokok * 0.3; 
             document.getElementById('kalk-hasil-baja').innerText = hasil.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
+        }
+
+        // FUNGSI AI KALKULATOR
+        function kiraAI() {
+            let teks = document.getElementById('ai-input').value.toLowerCase();
+            let resultBox = document.getElementById('ai-result');
+            let textBox = document.getElementById('ai-text');
+
+            if(!teks) return showToast("Sila taip soalan anda.", "error");
+
+            // 1. "AI" Cari Nombor dalam ayat
+            let matchNum = teks.match(/\d+(\.\d+)?/);
+            if (!matchNum) {
+                textBox.innerHTML = "Maaf Bos, saya tak jumpa nombor dalam ayat tu. Cuba taip macam ni: <b>'Nak tanam 2 ekar'</b> atau <b>'Kira baja untuk 5000 pokok'</b>.";
+                resultBox.style.display = 'block';
+                return;
+            }
+            
+            let num = parseFloat(matchNum[0]);
+            let acre = 0;
+            let pokok = 0;
+            let baja = 0;
+            let formula = "";
+
+            // 2. "AI" Faham konteks (Ekar ke Pokok?)
+            if (teks.includes("ekar") || teks.includes("acre")) {
+                acre = num;
+                pokok = acre * 5000;
+                baja = pokok * 0.3;
+                
+                formula = `
+                    <b>1. Anggaran Benih:</b><br>
+                    ${acre} ekar × 5,000 pokok/ekar = <b style="color:var(--primary-green);">${pokok.toLocaleString()} Benih / Sulur</b><br><br>
+                    <b>2. Anggaran Baja:</b><br>
+                    ${pokok.toLocaleString()} pokok × 0.3 kg = <b style="color:var(--primary-green);">${baja.toLocaleString()} kg Baja</b>
+                `;
+            } 
+            else if (teks.includes("pokok") || teks.includes("biji")) {
+                pokok = num;
+                acre = pokok / 5000;
+                baja = pokok * 0.3;
+
+                formula = `
+                    <b>1. Anggaran Benih:</b><br>
+                    Anda perlukan <b style="color:var(--primary-green);">${pokok.toLocaleString()} Benih</b><br><br>
+                    <b>2. Keluasan Diperlukan:</b><br>
+                    ${pokok.toLocaleString()} pokok ÷ 5,000 pokok/ekar = <b style="color:var(--primary-green);">${acre.toFixed(2)} Ekar</b><br><br>
+                    <b>3. Anggaran Baja:</b><br>
+                    ${pokok.toLocaleString()} pokok × 0.3 kg = <b style="color:var(--primary-green);">${baja.toLocaleString()} kg Baja</b>
+                `;
+            } 
+            else {
+                // Kalau takde 'ekar' atau 'pokok', default assume dia bagi ekar
+                acre = num;
+                pokok = acre * 5000;
+                baja = pokok * 0.3;
+
+                formula = `
+                    <i>(Saya andaikan ${num} ini adalah unit <b>Ekar</b>. Sila taip 'ekar' atau 'pokok' untuk lebih tepat).</i><br><br>
+                    <b>Benih:</b> ${acre} ekar × 5,000 = <b>${pokok.toLocaleString()} Benih</b><br>
+                    <b>Baja:</b> ${pokok.toLocaleString()} × 0.3kg = <b>${baja.toLocaleString()} kg</b>
+                `;
+            }
+
+            // 3. Paparkan Jawapan Macam AI
+            let response = `
+                <p style="margin-bottom:10px;">Berdasarkan kiraan, ini adalah rumusan untuk <b>${teks}</b>:</p>
+                <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px dashed #cbd5e1;">
+                    ${formula}
+                </div>
+                <p style="font-size:11px; color:#64748b; margin-top:10px;">*Nota: Ini adalah anggaran standard (5,000 pokok/ekar & 300g baja/pokok).</p>
+            `;
+
+            textBox.innerHTML = response;
+            resultBox.style.display = 'block';
         }
 
         // DATA MASALAH TANAMAN
