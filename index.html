@@ -395,6 +395,43 @@
                     <button class="btn btn-red btn-checkout" id="btn-checkout" onclick="prosesCheckOut()">⏹️ Check-Out</button>
                 </div>
             </div>
+
+            <!-- BAHAGIAN REKOD MANUAL BARU -->
+            <div class="card hide-print">
+                <div class="card-title">📝 Rekod Manual (Tidak Hadir / Lewat)</div>
+                <p style="font-size:13px; color:#666; margin-bottom:15px;">Isi borang ini jika ada pekerja yang tidak check-in atau masuk lewat.</p>
+                
+                <div class="form-group">
+                    <label>Nama Pekerja</label>
+                    <input type="text" id="man-nama" class="form-control" placeholder="Cth: Husni / Ali">
+                </div>
+                <div class="form-group">
+                    <label>Tarikh</label>
+                    <input type="date" id="man-tarikh" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="man-status" class="form-control" onchange="tukarSebabManual()">
+                            <option value="Tidak Hadir">Tidak Hadir</option>
+                            <option value="Lewat">Masuk Lewat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Sebab</label>
+                        <select id="man-sebab" class="form-control" onchange="tunjukSebabLain()">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="box-man-lain" style="display:none;">
+                    <label>Sebab (Lain-lain)</label>
+                    <input type="text" id="man-lain" class="form-control" placeholder="Nyatakan sebab di sini">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-blue" onclick="simpanKehadiranManual()">💾 Simpan Rekod</button>
+                </div>
+            </div>
             
             <div class="card" id="print-kehadiran">
                 <div class="card-title hide-print">Sejarah Kehadiran Semua Pekerja</div>
@@ -1264,6 +1301,12 @@
         };
 
         // ==========================================
+        // SEBAB TIDAK HADIR / LEWAT
+        // ==========================================
+        const sebabTidakHadir = ["Sakit / MC", "Cuti Rehat (Offday)", "Cuti Kecemasan", "Urusan Peribadi", "Cuaca Buruk / Banjir", "Lain-lain"];
+        const sebabLewat = ["Hujan / Cuaca Buruk", "Kenderaan Rosak", "Urusan Keluarga", "Masalah Kesihatan", "Lain-lain"];
+
+        // ==========================================
         // SISTEM AUTHENTICATION (LOGIN)
         // ==========================================
         function logMasuk() {
@@ -1418,7 +1461,7 @@
             if(id === 'catatan') { renderGame(); paparCatatan(); } 
             if(id === 'inventori') { paparInventori(); }
             if(id === 'katalog') { paparKatalog(); }
-            if(id === 'kehadiran') { paparKehadiran(); }
+            if(id === 'kehadiran') { paparKehadiran(); tukarSebabManual(); }
             if(id === 'sewa') { paparSewa(); }
         }
 
@@ -1604,15 +1647,26 @@
             tukarKategori(); 
         }
 
+        // UPDATE: Guna Blob untuk iPhone support
         function exportCSV() {
             if(dataRekod.length === 0) return showToast("Tiada data untuk dieksport.", "error");
-            let csvContent = "data:text/csv;charset=utf-8,Tarikh,Kategori,Tanaman,Jenis,Saluran,Status,Qty,Unit,Jumlah (RM),Nota\n";
+            
+            let csvContent = "Tarikh,Kategori,Tanaman,Jenis,Saluran,Status,Qty,Unit,Jumlah (RM),Nota\n";
             dataRekod.forEach(function(rowArray) {
                 let row = [ rowArray.tarikh, rowArray.kategori, rowArray.tanaman, rowArray.jenis, rowArray.saluran || 'Kebun', rowArray.status, rowArray.kuantiti, rowArray.unit || 'kg', rowArray.jumlah.replace('RM ', ''), `"${rowArray.nota}"` ].join(",");
                 csvContent += row + "\r\n";
             });
-            var encodedUri = encodeURI(csvContent); var link = document.createElement("a");
-            link.setAttribute("href", encodedUri); link.setAttribute("download", "Rekod_Ladang_NZ.csv"); document.body.appendChild(link); link.click();
+            
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "Rekod_Ladang_NZ.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Fail Rekod berjaya dimuat turun!");
         }
 
         function kongsiRekodWA() {
@@ -1981,7 +2035,7 @@
             let email = currentUser.email;
 
             // 1. Semak status check-in untuk pengguna yang tengah login (Kotak atas)
-            let activeShift = dataKehadiran.find(k => k.email === email && k.masaKeluar === null);
+            let activeShift = dataKehadiran.find(k => k.email === email && k.masaKeluar === null && !k.statusManual);
             
             if (activeShift) {
                 document.getElementById('teks-status').innerText = "Anda Sedang Bekerja";
@@ -2018,42 +2072,128 @@
             }
 
             semuaSejarah.forEach(item => {
-                let statusText = item.masaKeluar ? `Keluar: ${item.masaKeluar}` : 'Sedang Bekerja...';
-                let color = item.masaKeluar ? '#388e3c' : '#f57c00';
-                let total = item.jumlahJam ? `${item.jumlahJam.toFixed(2)} Jam` : '-';
+                let color, statusText, total, namaPekerja;
                 
-                // Ambil nama dari email
-                let namaPekerja = item.email.split('@')[0].toUpperCase();
+                namaPekerja = item.namaPekerja ? item.namaPekerja : item.email.split('@')[0].toUpperCase();
+
+                if (item.statusManual) {
+                    // Rekod Manual (Tidak Hadir / Lewat)
+                    color = (item.statusManual === 'Tidak Hadir') ? '#d32f2f' : '#f57c00';
+                    statusText = `Sebab: ${item.sebab}`;
+                    total = item.statusManual;
+                } else {
+                    // Rekod Check-in Normal
+                    statusText = item.masaKeluar ? `Keluar: ${item.masaKeluar}` : 'Sedang Bekerja...';
+                    color = item.masaKeluar ? '#388e3c' : '#f57c00';
+                    total = item.jumlahJam ? `${item.jumlahJam.toFixed(2)} Jam` : '-';
+                }
                 
                 container.innerHTML += `
                     <div class="list-item" style="border-left-color: ${color};">
                         <h4><span style="color:var(--primary-green);">${namaPekerja}</span> <span class="badge" style="background:${color}20; color:${color};">${total}</span></h4>
                         <p style="font-size:12px; margin-bottom:5px;">Tarikh: <b>${item.tarikh}</b></p>
-                        <p>Masuk: <b>${item.masaMasuk}</b> | ${statusText}</p>
+                        <p>${item.statusManual ? statusText : 'Masuk: <b>' + item.masaMasuk + '</b> | ' + statusText}</p>
+                        ${item.statusManual ? `<button onclick="padamRekodManual('${item.id}')" style="color:red; border:none; background:none; font-size:11px; margin-top:8px; cursor:pointer;">❌ Padam Rekod</button>` : ''}
                     </div>
                 `;
             });
         }
 
-        // FUNGSI 3BENDA: EXPORT CSV KEHADIRAN
+        // LOGIK REKOD MANUAL
+        function tukarSebabManual() {
+            let status = document.getElementById('man-status').value;
+            let selectSebab = document.getElementById('man-sebab');
+            selectSebab.innerHTML = '';
+            let senarai = (status === 'Tidak Hadir') ? sebabTidakHadir : sebabLewat;
+            senarai.forEach(s => {
+                selectSebab.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+            document.getElementById('box-man-lain').style.display = 'none';
+        }
+
+        function tunjukSebabLain() {
+            let sebab = document.getElementById('man-sebab').value;
+            document.getElementById('box-man-lain').style.display = (sebab === 'Lain-lain') ? 'block' : 'none';
+        }
+
+        function simpanKehadiranManual() {
+            let nama = document.getElementById('man-nama').value;
+            let tarikh = document.getElementById('man-tarikh').value;
+            let status = document.getElementById('man-status').value;
+            let sebab = document.getElementById('man-sebab').value;
+            let sebabLain = document.getElementById('man-lain').value;
+
+            if(!nama || !tarikh) return showToast("Sila isi Nama dan Tarikh.", "error");
+
+            let finalSebab = (sebab === 'Lain-lain') ? sebabLain : sebab;
+            if(sebab === 'Lain-lain' && !sebabLain) return showToast("Sila nyatakan sebab lain-lain.", "error");
+
+            let itemBaru = {
+                id: Date.now().toString(),
+                namaPekerja: nama.toUpperCase(),
+                email: "manual@nzrich.com", // Dummy email
+                tarikh: new Date(tarikh).toLocaleDateString('ms-MY'),
+                statusManual: status,
+                sebab: finalSebab,
+                masaMasuk: "-",
+                masaKeluar: "-",
+                jumlahJam: 0,
+                timestampMasuk: new Date(tarikh).getTime(),
+                isGajiDibuat: true // Supaya tak auto-kira gaji
+            };
+
+            dataKehadiran.push(itemBaru);
+            simpanSemuaKeCloud();
+            paparKehadiran();
+            showToast("Rekod manual berjaya disimpan!");
+
+            // Reset form
+            document.getElementById('man-nama').value = '';
+            document.getElementById('man-lain').value = '';
+            document.getElementById('box-man-lain').style.display = 'none';
+        }
+
+        function padamRekodManual(id) {
+            if(confirm("Padam rekod manual ini?")) {
+                dataKehadiran = dataKehadiran.filter(k => k.id !== id);
+                simpanSemuaKeCloud();
+                paparKehadiran();
+            }
+        }
+
+        // FUNGSI 3BENDA: EXPORT CSV KEHADIRAN (Guna Blob)
         function exportCSVKehadiran() {
             if (dataKehadiran.length === 0) return showToast("Tiada data kehadiran.", "error");
             
-            let csvContent = "data:text/csv;charset=utf-8,Nama Pekerja,Tarikh,Masa Masuk,Masa Keluar,Jumlah Jam\n";
-            
+            let csvContent = "Nama Pekerja,Tarikh,Masa Masuk,Masa Keluar,Jumlah Jam/Status,Sebab\n";
             let sortedData = [...dataKehadiran].sort((a, b) => b.timestampMasuk - a.timestampMasuk);
             
             sortedData.forEach(function(row) {
-                let nama = row.email.split('@')[0].toUpperCase();
+                let nama = row.namaPekerja ? row.namaPekerja : row.email.split('@')[0].toUpperCase();
                 let keluar = row.masaKeluar ? row.masaKeluar : "Belum Keluar";
                 let jam = row.jumlahJam ? row.jumlahJam.toFixed(2) : "0";
-                let rowStr = [nama, row.tarikh, row.masaMasuk, keluar, jam].join(",");
+                let statusSebab = "";
+                
+                if (row.statusManual) {
+                    keluar = "-";
+                    jam = "-";
+                    statusSebab = row.statusManual + " - " + row.sebab;
+                }
+
+                let rowStr = [nama, row.tarikh, row.masaMasuk, keluar, jam, `"${statusSebab}"`].join(",");
                 csvContent += rowStr + "\r\n";
             });
             
-            var encodedUri = encodeURI(csvContent); var link = document.createElement("a");
-            link.setAttribute("href", encodedUri); link.setAttribute("download", "Laporan_Kehadiran_NZ.csv"); document.body.appendChild(link); link.click();
-            showToast("CSV Kehadiran berjaya dimuat turun!");
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "Laporan_Kehadiran_NZ.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Fail Kehadiran berjaya dimuat turun!");
         }
 
         // FUNGSI 3BENDA: SHARE KE WHATSAPP
@@ -2065,10 +2205,15 @@
             
             // Ambil 20 rekod terbaru je supaya tak terlalu panjang
             sortedData.slice(0, 20).forEach((r, i) => {
-                let nama = r.email.split('@')[0].toUpperCase();
-                let keluar = r.masaKeluar ? r.masaKeluar : "Sedang Bekerja";
-                let jam = r.jumlahJam ? `(${r.jumlahJam.toFixed(1)} Jam)` : "";
-                teks += `${i+1}. *${nama}* | ${r.tarikh}\nMasuk: ${r.masaMasuk} | Keluar: ${keluar} ${jam}\n\n`;
+                let nama = r.namaPekerja ? r.namaPekerja : r.email.split('@')[0].toUpperCase();
+                
+                if (r.statusManual) {
+                    teks += `${i+1}. *${nama}* | ${r.tarikh}\n${r.statusManual}: ${r.sebab}\n\n`;
+                } else {
+                    let keluar = r.masaKeluar ? r.masaKeluar : "Sedang Bekerja";
+                    let jam = r.jumlahJam ? `(${r.jumlahJam.toFixed(1)} Jam)` : "";
+                    teks += `${i+1}. *${nama}* | ${r.tarikh}\nMasuk: ${r.masaMasuk} | Keluar: ${keluar} ${jam}\n\n`;
+                }
             });
             
             window.open("https://wa.me/?text=" + encodeURIComponent(teks), '_blank');
@@ -2087,8 +2232,8 @@
             // Loop semua rekod yang DAH CHECK-OUT tapi BELUM DIJANA GAJINYA
             dataKehadiran.forEach(k => {
                 // Kita cuma proses yang dah ada jumlahJam dan belum masuk dalam dataRekod
-                if (k.jumlahJam && !k.isGajiDibuat) {
-                    let namaPekerja = k.email.split('@')[0].toUpperCase();
+                if (k.jumlahJam && !k.isGajiDibuat && !k.statusManual) {
+                    let namaPekerja = k.namaPekerja ? k.namaPekerja : k.email.split('@')[0].toUpperCase();
                     let gajiKasar = k.jumlahJam * parseFloat(kadarSejam);
 
                     let rekodGaji = {
@@ -2147,7 +2292,7 @@
             let email = currentUser.email;
             let now = new Date();
             
-            let index = dataKehadiran.findIndex(k => k.email === email && k.masaKeluar === null);
+            let index = dataKehadiran.findIndex(k => k.email === email && k.masaKeluar === null && !k.statusManual);
             if (index > -1) {
                 dataKehadiran[index].masaKeluar = now.toLocaleTimeString('en-GB'); // FORMAT 24 JAM
                 dataKehadiran[index].timestampKeluar = now.getTime();
@@ -2708,6 +2853,7 @@
         let today = new Date().toISOString().split('T')[0];
         document.getElementById('r-tarikh').value = today;
         document.getElementById('cat-tarikh').value = today;
+        document.getElementById('man-tarikh').value = today;
         
         // Load Cuaca
         dapatCuaca();
