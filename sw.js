@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nzrich-v2';
+const CACHE_NAME = 'nzrich-v4';
 const urlsToCache = [
   './',
   './index.html',
