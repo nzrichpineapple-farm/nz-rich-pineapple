@@ -1,7 +1,11 @@
 /* NZ Rich - patch v2 (dimuatkan dalam <head>, selepas skrip Firebase) */
 (function () {
 'use strict';
-const UID_BOS = 'K5l2unI6EEUdlraPMItm0GNiJBi2';
+// KEMASKINI: Guna senarai (Array) untuk benarkan lebih dari 1 orang akses 'Bos'
+const UID_BOS = [
+  'K5l2unI6EEUdlraPMItm0GNiJBi2', // UID Kau (Bos)
+  'uY213u6svVVy36FVQlB2y6vTzGC3'  // UID Staff
+];
 const SEMBUNYI = ['laporan','rekod','invoice-jualan','invoice-transport','resit','sewa','katalog','notis'];
 let isBoss = false, kewSedia = false, migJalan = false, lastUmum = '', lastKew = '', siapTerap = false;
 const ref = n => db.collection('ladang_nz').doc(n);
@@ -20,8 +24,14 @@ function aturAkses() {
     if (m && SEMBUNYI.includes(m[1])) el.style.display = isBoss ? '' : 'none';
   });
   const tutup = el => { if (el) el.style.display = isBoss ? '' : 'none'; };
-  tutup(document.getElementById('summary-baki-kebun').closest('.card'));
-  tutup(document.getElementById('man-nama').closest('.card'));
+  
+  // Tambah safety check (if) supaya tak error kalau elemen tak jumpa
+  const elBakiKebun = document.getElementById('summary-baki-kebun');
+  if (elBakiKebun) tutup(elBakiKebun.closest('.card'));
+  
+  const elManNama = document.getElementById('man-nama');
+  if (elManNama) tutup(elManNama.closest('.card'));
+  
   tutup(document.querySelector('button[onclick="janaGajiKeRekod()"]'));
 }
 
@@ -75,8 +85,14 @@ function terapkan() {
 
 function mulaV2(rd, asalOnSnap) {
   terapkan();
-  isBoss = !!currentUser && currentUser.uid === UID_BOS;
-  if (UID_BOS.startsWith('TAMPAL')) showToast('UID Bos belum diisi dalam patch-v2.js', 'error');
+  // KEMASKINI: Guna .includes() untuk semak dalam senarai array
+  isBoss = !!currentUser && UID_BOS.includes(currentUser.uid);
+  
+  // KEMASKINI: Semak kalau UID placeholder masih ada
+  if (UID_BOS.some(uid => uid.startsWith('TAMPAL') || uid.startsWith('MASUKKAN'))) {
+      showToast('UID Bos belum diisi dalam patch-v2.js', 'error');
+  }
+  
   muatGame(); aturAkses();
   if (isBoss) mulaSyncKewangan();
   return asalOnSnap.call(rd, doc => {
