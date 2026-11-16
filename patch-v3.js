@@ -1,5 +1,5 @@
 /* NZ Rich - Flora Theme + Check-In Rehat/Auto Check-Out */
-(function () {
+window.addEventListener('load', function () {
   const BUKA = 7, TUTUP = 18; // sistem on 07:00, auto check-out 18:00
   const $ = id => document.getElementById(id);
 
@@ -23,12 +23,13 @@
   for (let i = 0; i < 10; i++) vineInner += daun(20 + i * 40, 11, .35, i % 2 ? -25 : 25, '#43a047');
   const vine = uri(svg(400, 22, vineInner, .3));
 
+  // SUNTIK TEMA TERUS KE BODY
   const st = document.createElement('style');
   st.textContent = `
   @media screen {
-    body { background-color:#f4f8f4; background-image:${tileApp}; background-size:300px; background-attachment:fixed; }
-    #auth-screen { background-image:${tileApp}; background-size:300px; }
-    .card { background:rgba(255,255,255,.94); }
+    body { background-color:#f4f8f4 !important; background-image:${tileApp} !important; background-size:300px !important; background-attachment:fixed !important; }
+    #auth-screen { background-image:${tileApp} !important; background-size:300px !important; }
+    .card { background:rgba(255,255,255,.94) !important; }
   }
   .invoice-preview {
     background-color:#fff;
@@ -49,7 +50,7 @@
   const rehatMs = (k, hingga) => (k.rehat || []).reduce((t, r) => t + ((r.tamat || hingga) - r.mula), 0);
   const sedangRehat = k => { const r = k.rehat || []; return r.length > 0 && r[r.length - 1].tamat === null; };
   const cutoff = k => { const d = new Date(k.timestampMasuk); d.setHours(TUTUP, 0, 0, 0); return d.getTime(); };
-  const cariAktif = () => currentUser ? dataKehadiran.find(k => k.email === currentUser.email && k.masaKeluar === null && !k.statusManual) : null;
+  const cariAktif = () => (typeof currentUser !== 'undefined' && currentUser) ? dataKehadiran.find(k => k.email === currentUser.email && k.masaKeluar === null && !k.statusManual) : null;
 
   function tutupShift(k, ts, auto) {
     if (sedangRehat(k)) k.rehat[k.rehat.length - 1].tamat = ts;
@@ -60,11 +61,12 @@
   }
 
   function semakAutoCheckout() {
+    if (typeof dataKehadiran === 'undefined') return false;
     const now = Date.now(); let ubah = false;
     dataKehadiran.forEach(k => {
       if (!k.statusManual && k.masaKeluar === null && now >= cutoff(k)) { tutupShift(k, cutoff(k), true); ubah = true; }
     });
-    if (ubah) simpanSemuaKeCloud();
+    if (ubah && typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud();
     return ubah;
   }
 
@@ -72,18 +74,28 @@
   const btnRehat = document.createElement('button');
   btnRehat.id = 'btn-rehat'; btnRehat.style.display = 'none'; btnRehat.style.margin = '0 auto 10px';
   btnRehat.onclick = togolRehat;
-  $('btn-checkout').before(btnRehat);
-  $('btn-checkout').style.margin = '0 auto';
+  
+  // SEMAKAN KESELAMATAN: Pastikan butang checkout wujud dulu baru letak butang rehat
+  const btnCheckout = $('btn-checkout');
+  if (btnCheckout) {
+    btnCheckout.before(btnRehat);
+    btnCheckout.style.margin = '0 auto';
+  }
+  
   const info = document.createElement('div');
   info.id = 'kh-info'; info.style.cssText = 'font-size:12px;color:#666;margin:-10px 0 15px;line-height:1.5';
-  $('masa-semasa').after(info);
+  const masaSemasa = $('masa-semasa');
+  if (masaSemasa) masaSemasa.after(info);
 
   function kemasBox() {
-    if (!currentUser) return;
+    if (typeof currentUser === 'undefined' || !currentUser) return;
     const k = cariAktif(), now = Date.now(), h = new Date().getHours();
     const dibuka = h >= BUKA && h < TUTUP;
     const box = $('box-kehadiran'), tx = $('teks-status'), jam = $('masa-semasa');
     const bIn = $('btn-checkin'), bOut = $('btn-checkout');
+    
+    if (!box || !tx || !jam || !bIn || !bOut) return; // Elak crash kalau page tak lengkap
+
     if (k) {
       const rehat = sedangRehat(k);
       bIn.style.display = 'none'; bOut.style.display = 'flex'; btnRehat.style.display = 'flex';
@@ -108,37 +120,43 @@
 
   function togolRehat() {
     const k = cariAktif(); if (!k) return;
-    if (sedangRehat(k)) { k.rehat[k.rehat.length - 1].tamat = Date.now(); showToast('Sambung kerja. Selamat bekerja!'); }
-    else { (k.rehat = k.rehat || []).push({ mula: Date.now(), tamat: null }); showToast('Rehat bermula. Masa kerja dijeda.'); }
-    simpanSemuaKeCloud(); paparKehadiran();
+    if (sedangRehat(k)) { k.rehat[k.rehat.length - 1].tamat = Date.now(); if(typeof showToast === 'function') showToast('Sambung kerja. Selamat bekerja!'); }
+    else { (k.rehat = k.rehat || []).push({ mula: Date.now(), tamat: null }); if(typeof showToast === 'function') showToast('Rehat bermula. Masa kerja dijeda.'); }
+    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
+    if(typeof paparKehadiran === 'function') paparKehadiran();
   }
 
   window.prosesCheckIn = function () {
-    if (!currentUser) return;
+    if (typeof currentUser === 'undefined' || !currentUser) return;
     const now = new Date(), h = now.getHours();
-    if (h < BUKA || h >= TUTUP) return showToast(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`, 'error');
+    if (h < BUKA || h >= TUTUP) return typeof showToast === 'function' ? showToast(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`, 'error') : alert(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`);
+    
     dataKehadiran.push({
       id: Date.now().toString(), email: currentUser.email,
       tarikh: now.toLocaleDateString('ms-MY'), masaMasuk: now.toLocaleTimeString('en-GB'),
       masaKeluar: null, jumlahJam: null, timestampMasuk: now.getTime(), timestampKeluar: null,
       isGajiDibuat: false, rehat: []
     });
-    simpanSemuaKeCloud(); paparKehadiran();
-    showToast('Check-in berjaya! Selamat bekerja.');
+    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
+    if(typeof paparKehadiran === 'function') paparKehadiran();
+    if(typeof showToast === 'function') showToast('Check-in berjaya! Selamat bekerja.');
   };
 
   window.prosesCheckOut = function () {
     const k = cariAktif(); if (!k) return;
     tutupShift(k, Date.now(), false);
-    simpanSemuaKeCloud(); paparKehadiran();
-    showToast(`Check-out berjaya! Kerja bersih ${k.jumlahJam.toFixed(2)} jam (rehat ditolak).`);
+    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
+    if(typeof paparKehadiran === 'function') paparKehadiran();
+    if(typeof showToast === 'function') showToast(`Check-out berjaya! Kerja bersih ${k.jumlahJam.toFixed(2)} jam (rehat ditolak).`);
   };
 
   window.paparKehadiran = function () {
-    if (!currentUser) return;
+    if (typeof currentUser === 'undefined' || !currentUser) return;
     semakAutoCheckout();
     kemasBox();
     const c = $('kandungan-kehadiran');
+    if (!c) return;
+    
     const s = [...dataKehadiran].sort((a, b) => b.timestampMasuk - a.timestampMasuk);
     if (!s.length) { c.innerHTML = '<p style="text-align:center; color:#999;">Tiada sejarah kehadiran.</p>'; return; }
     c.innerHTML = s.map(it => {
@@ -160,8 +178,9 @@
 
   // Semak setiap saat: auto check-out + kemas kini timer
   setInterval(() => {
-    if (!currentUser) return;
-    if (semakAutoCheckout()) { paparKehadiran(); return; }
-    if ($('page-kehadiran').classList.contains('active')) kemasBox();
+    if (typeof currentUser === 'undefined' || !currentUser) return;
+    if (semakAutoCheckout()) { if(typeof paparKehadiran === 'function') paparKehadiran(); return; }
+    const pg = $('page-kehadiran');
+    if (pg && pg.classList.contains('active')) kemasBox();
   }, 1000);
-})();
+});
