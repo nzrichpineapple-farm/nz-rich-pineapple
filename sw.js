@@ -3,6 +3,7 @@ const urlsToCache = [
   './',
   './index.html',
   './patch-v2.js?v=3',
+  './patch-v3.js',
   './logo.jpeg.JPG',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
