@@ -34,7 +34,7 @@ self.addEventListener('fetch', event => {
 
   if (url.origin === location.origin) {
     event.respondWith(
-      fetch(event.request, { cache: 'no - store' })
+      fetch(event.request, { cache: 'no-store' })
         .then(res => {
           if (res.ok) {
             const salin = res.clone();
