@@ -171,29 +171,74 @@ window.addEventListener('load', function () {
     if (pg && pg.classList.contains('active')) kemasBox();
   }, 1000);
 
-  /* ========== 3. CETAK INVOIS / RESIT (BOLEH GUNA DI iPHONE) ========== */
-  function cetakInvois(el) {
-    const lama = $('cetak-frame'); if (lama) lama.remove();
-    const css = [...document.querySelectorAll('style')].map(x => x.textContent).join('\n');
-    const f = document.createElement('iframe');
-    f.id = 'cetak-frame';
-    f.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
-    document.body.appendChild(f);
-    const d = f.contentWindow.document;
-    d.open();
-    d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + document.baseURI + '"><style>' + css +
-      '</style><style>html,body{background:#fff!important;padding:0!important;margin:0!important}.invoice-preview{border:none!important;margin:0!important;border-radius:0!important}@page{margin:10mm}</style></head><body>' +
-      el.outerHTML + '</body></html>');
-    d.close();
-    setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); }, 900);
+  /* ========== 3. PDF INVOIS/RESIT (KONGSI TERUS DARI iPHONE) ========== */
+  const muatSkrip = src => new Promise((ok, gagal) => {
+    const sc = document.createElement('script');
+    sc.src = src; sc.onload = ok; sc.onerror = () => gagal(new Error('Gagal muat ' + src));
+    document.head.appendChild(sc);
+  });
+  async function sediakanLib() {
+    if (!window.html2canvas) await muatSkrip('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if (!(window.jspdf && window.jspdf.jsPDF)) await muatSkrip('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   }
-  document.addEventListener('click', function (e) {
+  function namaFail(el) {
+    const kad = el.closest('.card');
+    const jenis = kad && kad.id === 'preview-resit' ? 'Resit' : (kad && kad.id === 'preview-transport' ? 'Invois Pengangkutan' : 'Invois');
+    const no = el.querySelector('[id$="-no"]');
+    const noTeks = no && no.textContent.trim() ? ' ' + no.textContent.trim() : '';
+    return ('NZ Rich Pineapple - ' + jenis + noTeks).replace(/[\\/:*?"<>|]/g, '-') + '.pdf';
+  }
+  async function janaPdf(el) {
+    await sediakanLib();
+    const klon = el.cloneNode(true);
+    klon.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+    klon.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;max-width:none;margin:0;border:none;border-radius:0;box-sizing:border-box;padding:30px;font-size:14px;display:flow-root';
+    klon.querySelectorAll('a').forEach(x => { x.style.color = 'inherit'; x.style.textDecoration = 'none'; });
+    document.body.appendChild(klon);
+    try {
+      const canvas = await html2canvas(klon, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 794 });
+      const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      let w = 190, h = w * canvas.height / canvas.width;
+      if (h > 277) { h = 277; w = h * canvas.width / canvas.height; }
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - w) / 2, 10, w, h);
+      return new File([pdf.output('blob')], namaFail(el), { type: 'application/pdf' });
+    } finally { klon.remove(); }
+  }
+  function tunjukPanelPdf(file) {
+    const lama = $('pdf-panel'); if (lama) lama.remove();
+    const url = URL.createObjectURL(file);
+    const p = document.createElement('div');
+    p.id = 'pdf-panel';
+    p.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100000;display:flex;align-items:flex-end;justify-content:center';
+    p.innerHTML = '<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px;text-align:center">' +
+      '<div style="font-weight:700;color:#2e7d32;font-size:16px">✅ PDF Sedia</div>' +
+      '<div style="font-size:12px;color:#666;margin:6px 0 14px;word-break:break-word">' + file.name + '</div>' +
+      '<button id="pdf-kongsi" class="btn btn-green" style="width:100%;margin-bottom:10px">📤 Kongsi / Simpan PDF</button>' +
+      '<button id="pdf-buka" class="btn btn-blue" style="width:100%;margin-bottom:10px">👁️ Buka PDF</button>' +
+      '<button id="pdf-tutup" class="btn btn-yellow" style="width:100%">Tutup</button></div>';
+    document.body.appendChild(p);
+    $('pdf-tutup').onclick = () => { p.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); };
+    $('pdf-buka').onclick = () => window.open(url, '_blank');
+    $('pdf-kongsi').onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: file.name });
+        else window.open(url, '_blank');
+      } catch (e) { if (e.name !== 'AbortError') window.open(url, '_blank'); }
+    };
+  }
+  let sedangJana = false;
+  document.addEventListener('click', async function (e) {
     const b = e.target.closest('button');
     if (!b || !/window\.print/.test(b.getAttribute('onclick') || '')) return;
     const kad = b.closest('.card');
     const prev = kad && kad.querySelector('.invoice-preview');
     if (!prev) return; // halaman lain guna cara asal
     e.preventDefault(); e.stopPropagation();
-    cetakInvois(prev);
+    if (sedangJana) return;
+    sedangJana = true;
+    toast('Menyediakan PDF...');
+    try { tunjukPanelPdf(await janaPdf(prev)); }
+    catch (err) { console.error(err); toast('Gagal jana PDF. Pastikan internet aktif dan cuba lagi.', 'error'); }
+    sedangJana = false;
   }, true);
 });
