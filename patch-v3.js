@@ -1,6 +1,6 @@
-/* NZ Rich - Flora Theme + Check-In Rehat/Auto Check-Out */
+/* NZ Rich - Flora Theme + Letterhead + Check-In Rehat/Auto Check-Out */
 window.addEventListener('load', function () {
-  const BUKA = 7, TUTUP = 18; 
+  const BUKA = 7, TUTUP = 18;
   const $ = id => document.getElementById(id);
 
   /* ========== 1. TEMA FLORA (SVG) ========== */
@@ -14,19 +14,31 @@ window.addEventListener('load', function () {
     daun(150, 40, .9, -30, '#66bb6a') + daun(250, 100, .8, 40, '#81c784') +
     daun(30, 230, .9, -50, '#66bb6a') + daun(150, 170, .7, 100, '#a5d6a7') +
     bunga(210, 60, 1) + bunga(100, 230, .9) + bunga(20, 150, .8) + bunga(270, 170, .8);
-  const tileApp = uri(svg(300, 300, tileInner, .2));
+  const tileApp = uri(svg(300, 300, tileInner, .35));
+  const tileInv = uri(svg(300, 300, tileInner, .06));
+
+  const cornerBL = uri(svg(220, 200, nenas(60, 120, .9, -10) + daun(100, 175, 1.2, -20, '#66bb6a') + daun(20, 185, 1, -70, '#81c784') + daun(110, 115, 1, -60, '#a5d6a7') + bunga(155, 170, 1), .16));
+  const cornerBR = uri(svg(220, 200, nenas(160, 120, .9, 10) + daun(120, 175, 1.2, -160, '#66bb6a') + daun(200, 185, 1, -110, '#81c784') + daun(110, 120, 1, -120, '#a5d6a7') + bunga(60, 170, 1), .16));
+  let vineInner = '<path d="M0 11Q100 4 200 11T400 11" stroke="#43a047" fill="none"/>';
+  for (let i = 0; i < 10; i++) vineInner += daun(20 + i * 40, 11, .35, i % 2 ? -25 : 25, '#43a047');
+  const vine = uri(svg(400, 22, vineInner, .3));
 
   const st = document.createElement('style');
   st.textContent = `
-  /* PAKSA BACKGROUND KAT HTML DAN BODY */
-  html, body { 
-    background-color: #f4f8f4 !important; 
-    background-image: ${tileApp} !important; 
-    background-size: 300px !important; 
-    background-attachment: fixed !important; 
+  @media screen {
+    html, body { background-color:#f4f8f4 !important; background-image:${tileApp} !important; background-size:300px !important; background-attachment:fixed !important; }
+    #auth-screen { background-image:${tileApp}; background-size:300px; }
+    .card { background-color:rgba(255,255,255,.86); }
   }
-  #auth-screen, #app { background-image: ${tileApp} !important; background-size: 300px !important; }
-  .card, .main-content, .page-content { background: transparent !important; }
+  .invoice-preview {
+    background-color:#fff;
+    background-image:${vine},${cornerBL},${cornerBR},${tileInv};
+    background-repeat:repeat-x,no-repeat,no-repeat,repeat;
+    background-position:0 0,left bottom,right bottom,0 0;
+    background-size:400px 22px,200px auto,200px auto,300px;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  @media print { .invoice-preview { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   .btn-checkin:disabled { opacity:.5; cursor:not-allowed; }
   `;
   document.head.appendChild(st);
@@ -37,6 +49,7 @@ window.addEventListener('load', function () {
   const rehatMs = (k, hingga) => (k.rehat || []).reduce((t, r) => t + ((r.tamat || hingga) - r.mula), 0);
   const sedangRehat = k => { const r = k.rehat || []; return r.length > 0 && r[r.length - 1].tamat === null; };
   const cutoff = k => { const d = new Date(k.timestampMasuk); d.setHours(TUTUP, 0, 0, 0); return d.getTime(); };
+  const toast = (m, t) => { if (typeof showToast === 'function') showToast(m, t); };
   const cariAktif = () => (typeof currentUser !== 'undefined' && currentUser) ? dataKehadiran.find(k => k.email === currentUser.email && k.masaKeluar === null && !k.statusManual) : null;
 
   function tutupShift(k, ts, auto) {
@@ -60,13 +73,9 @@ window.addEventListener('load', function () {
   const btnRehat = document.createElement('button');
   btnRehat.id = 'btn-rehat'; btnRehat.style.display = 'none'; btnRehat.style.margin = '0 auto 10px';
   btnRehat.onclick = togolRehat;
-  
   const btnCheckout = $('btn-checkout');
-  if (btnCheckout) {
-    btnCheckout.before(btnRehat);
-    btnCheckout.style.margin = '0 auto';
-  }
-  
+  if (btnCheckout) { btnCheckout.before(btnRehat); btnCheckout.style.margin = '0 auto'; }
+
   const info = document.createElement('div');
   info.id = 'kh-info'; info.style.cssText = 'font-size:12px;color:#666;margin:-10px 0 15px;line-height:1.5';
   const masaSemasa = $('masa-semasa');
@@ -78,8 +87,7 @@ window.addEventListener('load', function () {
     const dibuka = h >= BUKA && h < TUTUP;
     const box = $('box-kehadiran'), tx = $('teks-status'), jam = $('masa-semasa');
     const bIn = $('btn-checkin'), bOut = $('btn-checkout');
-    
-    if (!box || !tx || !jam || !bIn || !bOut) return; 
+    if (!box || !tx || !jam || !bIn || !bOut) return;
 
     if (k) {
       const rehat = sedangRehat(k);
@@ -105,34 +113,30 @@ window.addEventListener('load', function () {
 
   function togolRehat() {
     const k = cariAktif(); if (!k) return;
-    if (sedangRehat(k)) { k.rehat[k.rehat.length - 1].tamat = Date.now(); if(typeof showToast === 'function') showToast('Sambung kerja. Selamat bekerja!'); }
-    else { (k.rehat = k.rehat || []).push({ mula: Date.now(), tamat: null }); if(typeof showToast === 'function') showToast('Rehat bermula. Masa kerja dijeda.'); }
-    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
-    if(typeof paparKehadiran === 'function') paparKehadiran();
+    if (sedangRehat(k)) { k.rehat[k.rehat.length - 1].tamat = Date.now(); toast('Sambung kerja. Selamat bekerja!'); }
+    else { (k.rehat = k.rehat || []).push({ mula: Date.now(), tamat: null }); toast('Rehat bermula. Masa kerja dijeda.'); }
+    simpanSemuaKeCloud(); paparKehadiran();
   }
 
   window.prosesCheckIn = function () {
     if (typeof currentUser === 'undefined' || !currentUser) return;
     const now = new Date(), h = now.getHours();
-    if (h < BUKA || h >= TUTUP) return typeof showToast === 'function' ? showToast(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`, 'error') : alert(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`);
-    
+    if (h < BUKA || h >= TUTUP) return toast(`Check-in dibuka jam ${pad(BUKA)}:00 hingga ${TUTUP}:00 sahaja.`, 'error');
     dataKehadiran.push({
       id: Date.now().toString(), email: currentUser.email,
       tarikh: now.toLocaleDateString('ms-MY'), masaMasuk: now.toLocaleTimeString('en-GB'),
       masaKeluar: null, jumlahJam: null, timestampMasuk: now.getTime(), timestampKeluar: null,
       isGajiDibuat: false, rehat: []
     });
-    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
-    if(typeof paparKehadiran === 'function') paparKehadiran();
-    if(typeof showToast === 'function') showToast('Check-in berjaya! Selamat bekerja.');
+    simpanSemuaKeCloud(); paparKehadiran();
+    toast('Check-in berjaya! Selamat bekerja.');
   };
 
   window.prosesCheckOut = function () {
     const k = cariAktif(); if (!k) return;
     tutupShift(k, Date.now(), false);
-    if(typeof simpanSemuaKeCloud === 'function') simpanSemuaKeCloud(); 
-    if(typeof paparKehadiran === 'function') paparKehadiran();
-    if(typeof showToast === 'function') showToast(`Check-out berjaya! Kerja bersih ${k.jumlahJam.toFixed(2)} jam.`);
+    simpanSemuaKeCloud(); paparKehadiran();
+    toast(`Check-out berjaya! Kerja bersih ${k.jumlahJam.toFixed(2)} jam (rehat ditolak).`);
   };
 
   window.paparKehadiran = function () {
@@ -141,7 +145,6 @@ window.addEventListener('load', function () {
     kemasBox();
     const c = $('kandungan-kehadiran');
     if (!c) return;
-    
     const s = [...dataKehadiran].sort((a, b) => b.timestampMasuk - a.timestampMasuk);
     if (!s.length) { c.innerHTML = '<p style="text-align:center; color:#999;">Tiada sejarah kehadiran.</p>'; return; }
     c.innerHTML = s.map(it => {
@@ -163,7 +166,7 @@ window.addEventListener('load', function () {
 
   setInterval(() => {
     if (typeof currentUser === 'undefined' || !currentUser) return;
-    if (semakAutoCheckout()) { if(typeof paparKehadiran === 'function') paparKehadiran(); return; }
+    if (semakAutoCheckout()) { paparKehadiran(); return; }
     const pg = $('page-kehadiran');
     if (pg && pg.classList.contains('active')) kemasBox();
   }, 1000);
