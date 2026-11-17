@@ -188,7 +188,7 @@ window.addEventListener('load', function () {
     const noTeks = no && no.textContent.trim() ? ' ' + no.textContent.trim() : '';
     return ('NZ Rich Pineapple - ' + jenis + noTeks).replace(/[\\/:*?"<>|]/g, '-') + '.pdf';
   }
-    let peringkat = '';
+  let peringkat = '';
   function svgKePng(svgStr, w, h) {
     return new Promise(ok => {
       const img = new Image();
@@ -239,8 +239,6 @@ window.addEventListener('load', function () {
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - w) / 2, 10, w, h);
       return new File([pdf.output('blob')], namaFail(el), { type: 'application/pdf' });
     } finally { klon.remove(); }
-  }
-
   }
   function tunjukPanelPdf(file) {
     const lama = $('pdf-panel'); if (lama) lama.remove();
