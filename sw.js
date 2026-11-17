@@ -1,9 +1,9 @@
-const CACHE_NAME = 'nzrich-v22';
+const CACHE_NAME = 'nzrich-v23';
 const urlsToCache = [
   './',
   './index.html',
   './patch-v2.js?v=3',
-  './patch-v3.js?v=5',
+  './patch-v3.js?v=6',
   './logo.jpeg.JPG',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
