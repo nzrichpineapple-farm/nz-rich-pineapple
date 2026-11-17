@@ -188,7 +188,22 @@ window.addEventListener('load', function () {
     const noTeks = no && no.textContent.trim() ? ' ' + no.textContent.trim() : '';
     return ('NZ Rich Pineapple - ' + jenis + noTeks).replace(/[\\/:*?"<>|]/g, '-') + '.pdf';
   }
-  let peringkat = '';
+    let peringkat = '';
+  function svgKePng(svgStr, w, h) {
+    return new Promise(ok => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = w * 2; c.height = h * 2;
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          ok(c.toDataURL('image/png'));
+        } catch (e) { ok(null); }
+      };
+      img.onerror = () => ok(null);
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+    });
+  }
   async function janaPdf(el) {
     peringkat = 'muat pustaka';
     await sediakanLib();
@@ -197,9 +212,21 @@ window.addEventListener('load', function () {
     klon.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
     klon.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;max-width:none;margin:0;border:none;border-radius:0;box-sizing:border-box;padding:30px;font-size:14px;display:flow-root';
     klon.querySelectorAll('a').forEach(x => { x.style.color = 'inherit'; x.style.textDecoration = 'none'; });
-    klon.style.setProperty('background-image', 'none', 'important');
     klon.querySelectorAll('img').forEach(i => i.setAttribute('crossorigin', 'anonymous'));
 
+    const rawVine = svg(400, 22, vineInner, .3);
+    const rawBL = svg(220, 200, nenas(60, 120, .9, -10) + daun(100, 175, 1.2, -20, '#66bb6a') + daun(20, 185, 1, -70, '#81c784') + daun(110, 115, 1, -60, '#a5d6a7') + bunga(155, 170, 1), .16);
+    const rawBR = svg(220, 200, nenas(160, 120, .9, 10) + daun(120, 175, 1.2, -160, '#66bb6a') + daun(200, 185, 1, -110, '#81c784') + daun(110, 120, 1, -120, '#a5d6a7') + bunga(60, 170, 1), .16);
+    const [pV, pL, pR] = await Promise.all([svgKePng(rawVine, 400, 22), svgKePng(rawBL, 220, 200), svgKePng(rawBR, 220, 200)]);
+    if (pV && pL && pR) {
+      klon.style.setProperty('background-color', '#ffffff', 'important');
+      klon.style.setProperty('background-image', 'url(' + pV + '),url(' + pL + '),url(' + pR + ')', 'important');
+      klon.style.setProperty('background-repeat', 'repeat-x,no-repeat,no-repeat', 'important');
+      klon.style.setProperty('background-position', '0 0,left bottom,right bottom', 'important');
+      klon.style.setProperty('background-size', '400px 22px,200px auto,200px auto', 'important');
+    } else {
+      klon.style.setProperty('background-image', 'none', 'important');
+    }
 
     document.body.appendChild(klon);
     try {
@@ -212,6 +239,8 @@ window.addEventListener('load', function () {
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - w) / 2, 10, w, h);
       return new File([pdf.output('blob')], namaFail(el), { type: 'application/pdf' });
     } finally { klon.remove(); }
+  }
+
   }
   function tunjukPanelPdf(file) {
     const lama = $('pdf-panel'); if (lama) lama.remove();
