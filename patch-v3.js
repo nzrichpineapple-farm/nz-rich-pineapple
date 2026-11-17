@@ -197,6 +197,10 @@ window.addEventListener('load', function () {
     klon.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
     klon.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;max-width:none;margin:0;border:none;border-radius:0;box-sizing:border-box;padding:30px;font-size:14px;display:flow-root';
     klon.querySelectorAll('a').forEach(x => { x.style.color = 'inherit'; x.style.textDecoration = 'none'; });
+    klon.style.setProperty('background-image', 'none', 'important');
+    klon.querySelectorAll('img').forEach(i => i.setAttribute('crossorigin', 'anonymous'));
+
+
     document.body.appendChild(klon);
     try {
       peringkat = 'lukis invois';
