@@ -246,4 +246,27 @@ window.addEventListener('load', function () {
     catch (err) { console.error(err); alert('Ralat PDF (' + peringkat + '): ' + (err && err.message ? err.message : String(err))); }
     sedangJana = false;
   }, true);
+
+  /* ========== 4. TARIKH AUTO (HARI INI, MASA TEMPATAN) ========== */
+  const hariIni = (tambah = 0) => {
+    const d = new Date(); d.setDate(d.getDate() + tambah);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  };
+  function kemasTarikh() {
+    [['res-tarikh', 0], ['j-tarikh', 0], ['j-tamat', 30], ['t-tarikh', 0], ['r-tarikh', 0], ['cat-tarikh', 0], ['man-tarikh', 0]]
+      .forEach(([id, t]) => { const x = $(id); if (x) x.value = hariIni(t); });
+  }
+  kemasTarikh();
+  if (typeof window.showPage === 'function') {
+    const showPageAsal = window.showPage;
+    window.showPage = function (id) {
+      const r = showPageAsal.apply(this, arguments);
+      if (['resit', 'invoice-jualan', 'invoice-transport', 'rekod', 'catatan', 'kehadiran'].includes(id)) kemasTarikh();
+      return r;
+    };
+  }
+  if (typeof window.resetRekod === 'function') {
+    const resetAsal = window.resetRekod;
+    window.resetRekod = function () { const r = resetAsal.apply(this, arguments); kemasTarikh(); return r; };
+  }
 });
