@@ -170,4 +170,30 @@ window.addEventListener('load', function () {
     const pg = $('page-kehadiran');
     if (pg && pg.classList.contains('active')) kemasBox();
   }, 1000);
+
+  /* ========== 3. CETAK INVOIS / RESIT (BOLEH GUNA DI iPHONE) ========== */
+  function cetakInvois(el) {
+    const lama = $('cetak-frame'); if (lama) lama.remove();
+    const css = [...document.querySelectorAll('style')].map(x => x.textContent).join('\n');
+    const f = document.createElement('iframe');
+    f.id = 'cetak-frame';
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+    document.body.appendChild(f);
+    const d = f.contentWindow.document;
+    d.open();
+    d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + document.baseURI + '"><style>' + css +
+      '</style><style>html,body{background:#fff!important;padding:0!important;margin:0!important}.invoice-preview{border:none!important;margin:0!important;border-radius:0!important}@page{margin:10mm}</style></head><body>' +
+      el.outerHTML + '</body></html>');
+    d.close();
+    setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); }, 900);
+  }
+  document.addEventListener('click', function (e) {
+    const b = e.target.closest('button');
+    if (!b || !/window\.print/.test(b.getAttribute('onclick') || '')) return;
+    const kad = b.closest('.card');
+    const prev = kad && kad.querySelector('.invoice-preview');
+    if (!prev) return; // halaman lain guna cara asal
+    e.preventDefault(); e.stopPropagation();
+    cetakInvois(prev);
+  }, true);
 });
