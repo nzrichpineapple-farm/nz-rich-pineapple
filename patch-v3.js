@@ -188,15 +188,20 @@ window.addEventListener('load', function () {
     const noTeks = no && no.textContent.trim() ? ' ' + no.textContent.trim() : '';
     return ('NZ Rich Pineapple - ' + jenis + noTeks).replace(/[\\/:*?"<>|]/g, '-') + '.pdf';
   }
+  let peringkat = '';
   async function janaPdf(el) {
+    peringkat = 'muat pustaka';
     await sediakanLib();
+    peringkat = 'sediakan invois';
     const klon = el.cloneNode(true);
     klon.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
     klon.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;max-width:none;margin:0;border:none;border-radius:0;box-sizing:border-box;padding:30px;font-size:14px;display:flow-root';
     klon.querySelectorAll('a').forEach(x => { x.style.color = 'inherit'; x.style.textDecoration = 'none'; });
     document.body.appendChild(klon);
     try {
+      peringkat = 'lukis invois';
       const canvas = await html2canvas(klon, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 794 });
+      peringkat = 'cipta PDF';
       const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
       let w = 190, h = w * canvas.height / canvas.width;
       if (h > 277) { h = 277; w = h * canvas.width / canvas.height; }
@@ -238,7 +243,7 @@ window.addEventListener('load', function () {
     sedangJana = true;
     toast('Menyediakan PDF...');
     try { tunjukPanelPdf(await janaPdf(prev)); }
-    catch (err) { console.error(err); toast('Gagal jana PDF. Pastikan internet aktif dan cuba lagi.', 'error'); }
+    catch (err) { console.error(err); alert('Ralat PDF (' + peringkat + '): ' + (err && err.message ? err.message : String(err))); }
     sedangJana = false;
   }, true);
 });
