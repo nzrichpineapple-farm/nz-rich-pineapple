@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nzrich-v30';
+const CACHE_NAME = 'nzrich-v31';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const urlsToCache = [
   './patch-v5.js?v=1',
   './patch-cetak.js?v=1',
   './patch-game.js?v=1',
-  './patch-statement.js?v=1',
+  './patch-statement.js?v=2',
   './patch-jumlah.js?v=1',
   './patch-bayaran.js?v=1',
   './logo.jpeg.JPG',
