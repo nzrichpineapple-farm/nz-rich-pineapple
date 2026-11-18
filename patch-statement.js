@@ -21,7 +21,8 @@ window.addEventListener('load', function () {
     return new Date(y, m - 1, d);
   }
   const jum = r => parseFloat(String(r.jumlah).replace(/[^0-9.]/g, '')) || 0;
-  const akaun = r => r.saluran === 'Shopee' ? 'Shopee' : ((!r.saluran || r.saluran === 'Kebun') ? 'Kebun' : 'Online');
+  const akaun = r => r.saluran === 'Shopee' ? 'Shopee' : ((r.jenisBayar === 'QR' || r.jenisBayar === 'Online Transfer') ? 'Online' : (r.jenisBayar === 'Cash' ? 'Kebun' : ((!r.saluran || r.saluran === 'Kebun') ? 'Kebun' : 'Online')));
+
   const dengan = () => senarai().map(r => ({ r, d: tarikhRekod(r) })).filter(x => x.d);
 
   function ringkas(list) {
