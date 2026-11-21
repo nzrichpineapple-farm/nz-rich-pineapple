@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nzrich-v35';
+const CACHE_NAME = 'nzrich-v36';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,11 +8,11 @@ const urlsToCache = [
   './patch-v5.js?v=1',
   './patch-cetak.js?v=1',
   './patch-game.js?v=1',
-  './patch-statement.js?v=2',
+  './patch-statement.js?v=3',
   './patch-jumlah.js?v=1',
   './patch-bayaran.js?v=1',
   './patch-tanaman.js?v=1',
-  './patch-hutang.js?v=1',
+  './patch-hutang.js?v=2',
   './logo.jpeg.JPG',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
