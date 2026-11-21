@@ -1,4 +1,4 @@
-/* NZ Rich - Statement 3 bulan + Bonus tahunan Shopee */
+/* NZ Rich - Statement 3 bulan + Bonus tahunan Shopee (v3: hutang OUT tidak dikira dalam Keluar) */
 window.addEventListener('load', function () {
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -25,11 +25,14 @@ window.addEventListener('load', function () {
 
   const dengan = () => senarai().map(r => ({ r, d: tarikhRekod(r) })).filter(x => x.d);
 
+  /* Rekod berstatus Hutang: duit belum bergerak, jadi TIDAK masuk Masuk/Keluar/Baki */
   function ringkas(list) {
-    const o = { Kebun: { i: 0, o: 0 }, Online: { i: 0, o: 0 }, Shopee: { i: 0, o: 0 }, hutang: 0 };
+    const o = { Kebun: { i: 0, o: 0 }, Online: { i: 0, o: 0 }, Shopee: { i: 0, o: 0 }, hutang: 0, hutangKita: 0 };
     list.forEach(({ r }) => {
       const a = akaun(r), v = jum(r);
-      if (r.jenis === 'IN') { if (r.status === 'Hutang') o.hutang += v; else o[a].i += v; }
+      if (r.status === 'Hutang') {
+        if (r.jenis === 'IN') o.hutang += v; else o.hutangKita += v;
+      } else if (r.jenis === 'IN') o[a].i += v;
       else o[a].o += v;
     });
     return o;
@@ -57,7 +60,8 @@ window.addEventListener('load', function () {
         '<th style="' + TH + '">Akaun</th><th style="' + TH + 'text-align:right">Masuk</th><th style="' + TH + 'text-align:right">Keluar</th><th style="' + TH + 'text-align:right">Baki</th></tr>' +
       ['Kebun', 'Online'].map(a => '<tr><td style="' + TD + '">' + a + '</td><td style="' + TD + 'text-align:right">' + rm(o[a].i) + '</td><td style="' + TD + 'text-align:right">' + rm(o[a].o) + '</td><td style="' + TD + 'text-align:right;font-weight:700">' + rm(o[a].i - o[a].o) + '</td></tr>').join('') +
       '</table>';
-    if (o.hutang > 0) h += '<p style="font-size:12px;color:#d32f2f;font-weight:700;margin-bottom:10px">Hutang belum dibayar bulan ini: ' + rm(o.hutang) + ' (tidak dikira dalam Masuk)</p>';
+    if (o.hutang > 0) h += '<p style="font-size:12px;color:#d32f2f;font-weight:700;margin-bottom:6px">Hutang pelanggan belum diterima bulan ini: ' + rm(o.hutang) + ' (tidak dikira dalam Masuk)</p>';
+    if (o.hutangKita > 0) h += '<p style="font-size:12px;color:#ad1457;font-weight:700;margin-bottom:10px">Hutang kita belum dibayar bulan ini: ' + rm(o.hutangKita) + ' (tidak dikira dalam Keluar)</p>';
     h += '<div style="font-size:13px;font-weight:700;margin:10px 0 6px">Senarai Transaksi (' + list.length + ')</div>';
     if (!list.length) return h + '<p style="text-align:center;color:#999;font-size:13px">Tiada transaksi bulan ini.</p>';
     h += '<table style="width:100%;border-collapse:collapse;font-size:11px"><tr>' +
@@ -65,11 +69,12 @@ window.addEventListener('load', function () {
     list.forEach(({ r, d }) => {
       const info = (r.kategori === 'Tanaman' ? r.tanaman : r.kategori) + (r.nota ? ' - ' + r.nota : '');
       const hut = r.status === 'Hutang';
+      const gaya = hut ? 'color:#999;font-style:italic' : '';
       h += '<tr><td style="' + TD + '">' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '</td>' +
-        '<td style="' + TD + '">' + esc(info) + (hut ? ' <b style="color:#d32f2f">(Hutang)</b>' : '') + '</td>' +
+        '<td style="' + TD + '">' + esc(info) + (hut ? ' <b style="color:#d32f2f;font-style:normal">(Hutang)</b>' : '') + '</td>' +
         '<td style="' + TD + '">' + akaun(r) + '</td>' +
-        '<td style="' + TD + 'text-align:right;' + (hut ? 'color:#999;font-style:italic' : '') + '">' + (r.jenis === 'IN' ? rm(jum(r)) : '') + '</td>' +
-        '<td style="' + TD + 'text-align:right">' + (r.jenis === 'OUT' ? rm(jum(r)) : '') + '</td></tr>';
+        '<td style="' + TD + 'text-align:right;' + gaya + '">' + (r.jenis === 'IN' ? rm(jum(r)) : '') + '</td>' +
+        '<td style="' + TD + 'text-align:right;' + gaya + '">' + (r.jenis === 'OUT' ? rm(jum(r)) : '') + '</td></tr>';
     });
     return h + '</table>';
   }
