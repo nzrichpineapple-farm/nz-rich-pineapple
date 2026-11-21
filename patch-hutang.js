@@ -1,127 +1,106 @@
-/* patch-hutang.js (v1)
-   1. Pisahkan Hutang Pelanggan (IN belum terima) dan Hutang Kita (OUT belum bayar)
+/* patch-hutang.js (v2)
+   1. Hutang Pelanggan (IN belum terima) dan Hutang Kita (OUT belum bayar) dipisahkan
    2. Rekod berstatus "Hutang" TIDAK dikira dalam baki / Jumlah IN / Jumlah OUT
-   3. Butang "Lunas" pada rekod hutang -> tukar jadi Selesai, terus masuk baki
-   Letak SELEPAS patch-tanaman.js (paling bawah) dalam index.html */
-(function () {
-    function rmVal(r) {
-        return parseFloat(String(r.jumlah).replace(/[^0-9.]/g, '')) || 0;
+   3. Butang "Lunas" pada rekod hutang -> jadi Selesai, terus masuk baki
+   Mesti dimuat PALING BAWAH (selepas patch-bayaran.js). Berjalan dalam 'load'
+   supaya menimpa kemaskiniRingkasan dari patch-bayaran.js. */
+window.addEventListener('load', function () {
+  const $ = id => document.getElementById(id);
+  if (typeof dataRekod === 'undefined') return;
+
+  const nilai = r => parseFloat(String(r.jumlah).replace(/[^0-9.]/g, '')) || 0;
+  const fmt = n => 'RM ' + n.toFixed(2);
+  const set = (id, v) => { const e = $(id); if (e) e.innerText = fmt(v); };
+
+  /* Kumpulan akaun: sama seperti patch-bayaran.js */
+  function kumpulan(r) {
+    if ((r.saluran || 'Kebun') === 'Shopee') return 'shopee';
+    if (r.jenisBayar === 'QR' || r.jenisBayar === 'Online Transfer') return 'online';
+    if (r.jenisBayar === 'Cash') return 'kebun';
+    return r.saluran === 'Live' ? 'online' : 'kebun';
+  }
+
+  /* Label + kotak Hutang Kita */
+  (function sediakanKotak() {
+    const h = $('summary-hutang');
+    const box = h && h.closest('.summary-box');
+    if (!box) return;
+    const p = box.querySelector('p');
+    if (p) p.textContent = 'Hutang Pelanggan (RM)';
+    if (!$('summary-hutang-kita')) {
+      const b = document.createElement('div');
+      b.className = 'summary-box';
+      b.style.background = '#ad1457';
+      b.innerHTML = '<span style="position:absolute;right:-10px;bottom:-10px;font-size:60px;opacity:0.2;">💳</span>' +
+        '<p>Hutang Kita (RM)</p><h3 id="summary-hutang-kita">RM 0.00</h3>';
+      box.after(b);
     }
-    function setTxt(id, txt) {
-        var el = document.getElementById(id);
-        if (el) el.innerText = txt;
-    }
-    function fmt(n) { return 'RM ' + n.toFixed(2); }
+  })();
 
-    // ---- 1. Ubah label & tambah kotak "Hutang Kita" ----
-    function sediakanKotak() {
-        var h = document.getElementById('summary-hutang');
-        if (!h) return;
-        var box = h.closest('.summary-box');
-        var label = box ? box.querySelector('p') : null;
-        if (label) label.innerText = 'Hutang Pelanggan (RM)';
+  /* Kiraan ringkasan baharu */
+  window.kemaskiniRingkasan = function () {
+    const baki = { kebun: 0, online: 0, shopee: 0 };
+    let jualan = 0, modal = 0, masuk = 0, keluar = 0, hutangPel = 0, hutangKita = 0;
+    dataRekod.forEach(r => {
+      const v = nilai(r), isIn = r.jenis === 'IN';
+      if (r.kategori === 'Tanaman' && isIn) jualan += v;
+      if (r.kategori === 'Lain-lain / Modal' && !isIn) modal += v;
+      if (r.status === 'Hutang') {            /* duit belum bergerak */
+        if (isIn) hutangPel += v; else hutangKita += v;
+        return;
+      }
+      baki[kumpulan(r)] += isIn ? v : -v;
+      if (isIn) masuk += v; else keluar += v;
+    });
+    set('summary-baki-kebun', baki.kebun);
+    set('summary-baki-online', baki.online);
+    set('summary-shopee', baki.shopee);
+    set('summary-in', masuk);
+    set('summary-out', keluar);
+    set('summary-jualan', jualan);
+    set('summary-modal', modal);
+    set('summary-hutang', hutangPel);
+    set('summary-hutang-kita', hutangKita);
+  };
 
-        if (box && !document.getElementById('summary-hutang-kita')) {
-            var baru = document.createElement('div');
-            baru.className = 'summary-box';
-            baru.style.background = '#ad1457';
-            baru.innerHTML =
-                '<span style="position:absolute; right:-10px; bottom:-10px; font-size:60px; opacity:0.2;">💳</span>' +
-                '<p>Hutang Kita (RM)</p><h3 id="summary-hutang-kita">RM 0.00</h3>';
-            box.parentNode.insertBefore(baru, box.nextSibling);
-        }
-    }
+  /* Butang Lunas */
+  window.tandaLunas = function (i) {
+    const r = dataRekod[i];
+    if (!r || r.status !== 'Hutang') return;
+    if (!confirm('Hutang ' + r.jumlah + ' dah dilunaskan? Rekod jadi Selesai dan masuk baki.')) return;
+    r.status = 'Selesai';
+    r.tarikhLunas = new Date().toLocaleDateString('ms-MY');
+    simpanSemuaKeCloud();
+    paparRekod();
+    showToast('Hutang ditandakan Lunas!');
+  };
 
-    // ---- 2. Kiraan ringkasan baru ----
-    window.kemaskiniRingkasan = function () {
-        var inKebun = 0, outKebun = 0, inOnline = 0, outOnline = 0, shopeeIn = 0, shopeeOut = 0;
-        var jualan = 0, modal = 0, totalIn = 0, totalOut = 0, hutangPel = 0, hutangKita = 0;
+  function butangLunas() {
+    const tb = $('tbody-rekod');
+    if (!tb) return;
+    tb.querySelectorAll('button[onclick^="padam("]').forEach(pb => {
+      const m = pb.getAttribute('onclick').match(/padam\((\d+)\)/);
+      const r = m && dataRekod[parseInt(m[1], 10)];
+      const td = pb.parentNode;
+      if (!r || r.status !== 'Hutang' || td.querySelector('.btn-lunas')) return;
+      const b = document.createElement('button');
+      b.className = 'btn-lunas';
+      b.textContent = '✅ Lunas';
+      b.setAttribute('onclick', 'tandaLunas(' + m[1] + ')');
+      b.style.cssText = 'display:block;margin-bottom:4px;background:#2e7d32;color:#fff;border:none;border-radius:5px;padding:4px 8px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;';
+      td.insertBefore(b, pb);
+    });
+  }
 
-        (typeof dataRekod !== 'undefined' ? dataRekod : []).forEach(function (r) {
-            var rm = rmVal(r);
-            var saluran = r.saluran || 'Kebun';
+  const paparAsal = window.paparRekod;
+  window.paparRekod = function () {
+    const r = paparAsal.apply(this, arguments);
+    butangLunas();
+    window.kemaskiniRingkasan();   /* pastikan kiraan kita yang terakhir */
+    return r;
+  };
 
-            // Jualan & Kos Modal kekal ikut akaun (termasuk yang belum bayar)
-            if (r.kategori === 'Tanaman' && r.jenis === 'IN') jualan += rm;
-            if (r.kategori === 'Lain-lain / Modal' && r.jenis === 'OUT') modal += rm;
-
-            // Hutang: asingkan, jangan masuk baki / IN / OUT
-            if (r.status === 'Hutang') {
-                if (r.jenis === 'IN') hutangPel += rm; else hutangKita += rm;
-                return;
-            }
-
-            // Duit sebenar yang dah bergerak
-            if (r.jenis === 'IN') totalIn += rm; else totalOut += rm;
-            if (saluran === 'Kebun') {
-                if (r.jenis === 'IN') inKebun += rm; else outKebun += rm;
-            } else {
-                if (r.jenis === 'IN') inOnline += rm; else outOnline += rm;
-            }
-            if (saluran === 'Shopee') {
-                if (r.jenis === 'IN') shopeeIn += rm; else shopeeOut += rm;
-            }
-        });
-
-        setTxt('summary-baki-kebun', fmt(inKebun - outKebun));
-        setTxt('summary-baki-online', fmt(inOnline - outOnline));
-        setTxt('summary-shopee', fmt(shopeeIn - shopeeOut));
-        setTxt('summary-in', fmt(totalIn));
-        setTxt('summary-out', fmt(totalOut));
-        setTxt('summary-jualan', fmt(jualan));
-        setTxt('summary-modal', fmt(modal));
-        setTxt('summary-hutang', fmt(hutangPel));
-        setTxt('summary-hutang-kita', fmt(hutangKita));
-    };
-
-    // ---- 3. Butang "Lunas" pada jadual rekod ----
-    window.tandaLunas = function (i) {
-        var r = dataRekod[i];
-        if (!r || r.status !== 'Hutang') return;
-        var teks = (r.jenis === 'IN')
-            ? 'Pelanggan dah bayar ' + r.jumlah + '? Rekod akan jadi Selesai dan masuk baki.'
-            : 'Dah bayar ' + r.jumlah + '? Rekod akan jadi Selesai dan masuk baki.';
-        if (!confirm(teks)) return;
-        r.status = 'Selesai';
-        r.tarikhLunas = new Date().toLocaleDateString('ms-MY');
-        simpanSemuaKeCloud();
-        if (typeof paparRekod === 'function') paparRekod();
-        kemaskiniRingkasan();
-        showToast('Hutang ditandakan Lunas!');
-    };
-
-    function tambahButangLunas() {
-        var tbody = document.getElementById('tbody-rekod');
-        if (!tbody) return;
-        tbody.querySelectorAll('tr').forEach(function (tr) {
-            var padamBtn = tr.querySelector('button[onclick^="padam("]');
-            if (!padamBtn) return;
-            var m = padamBtn.getAttribute('onclick').match(/padam\((\d+)\)/);
-            if (!m) return;
-            var idx = parseInt(m[1], 10);
-            var r = dataRekod[idx];
-            if (!r || r.status !== 'Hutang') return;
-            var td = padamBtn.parentNode;
-            if (td.querySelector('.btn-lunas')) return;
-            var b = document.createElement('button');
-            b.className = 'btn-lunas';
-            b.innerText = '✅ Lunas';
-            b.setAttribute('onclick', 'tandaLunas(' + idx + ')');
-            b.style.cssText = 'display:block; margin-bottom:4px; background:#2e7d32; color:#fff; border:none; border-radius:5px; padding:4px 8px; font-size:11px; font-weight:bold; cursor:pointer; white-space:nowrap;';
-            td.insertBefore(b, padamBtn);
-        });
-    }
-
-    // Bungkus paparRekod sedia ada (termasuk yang mungkin diubah patch lain)
-    var paparAsal = window.paparRekod;
-    window.paparRekod = function () {
-        if (typeof paparAsal === 'function') paparAsal.apply(this, arguments);
-        tambahButangLunas();
-    };
-
-    sediakanKotak();
-    if (typeof dataRekod !== 'undefined') {
-        kemaskiniRingkasan();
-        tambahButangLunas();
-    }
-})();
+  /* Papar semula dengan kiraan baharu */
+  window.kemaskiniRingkasan();
+  butangLunas();
+});
